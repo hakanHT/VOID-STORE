@@ -4,9 +4,9 @@ using System.Windows.Input;
 
 namespace VOID_STORE
 {
-    public partial class ForgotPassword : Window
+    public partial class ResetPassword : Window
     {
-        public ForgotPassword()
+        public ResetPassword()
         {
             InitializeComponent();
         }
@@ -31,7 +31,7 @@ namespace VOID_STORE
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            // Giriş ekranına geri dönüş
+            // Kullanıcı bu aşamada geri dönmek isterse Login'e dönsün
             Login loginScreen = new Login();
             loginScreen.Left = this.Left;
             loginScreen.Top = this.Top;
@@ -40,14 +40,9 @@ namespace VOID_STORE
             this.Close();
         }
 
-        private void SendCode_Click(object sender, RoutedEventArgs e)
+        private void SavePassword_Click(object sender, RoutedEventArgs e)
         {
-            CodeVerification verifyScreen = new CodeVerification();
-            verifyScreen.Left = this.Left;
-            verifyScreen.Top = this.Top;
-            verifyScreen.WindowStartupLocation = WindowStartupLocation.Manual;
-            verifyScreen.Show();
-            this.Close();
+            // Şifre kaydetme işlemi eklenecek.
         }
     }
 }

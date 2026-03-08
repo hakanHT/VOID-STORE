@@ -36,6 +36,9 @@ namespace VOID_STORE
         {
             // Giriş ekranına geri dönüş
             Login loginScreen = new Login();
+            loginScreen.Left = this.Left;
+            loginScreen.Top = this.Top;
+            loginScreen.WindowStartupLocation = WindowStartupLocation.Manual;
             loginScreen.Show();
             this.Close();
         }

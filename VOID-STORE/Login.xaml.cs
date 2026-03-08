@@ -41,6 +41,9 @@ namespace VOID_STORE
         {
             // Şifre sıfırlama ekranına yönlendirilecek
             ForgotPassword forgotScreen = new ForgotPassword();
+            forgotScreen.Left = this.Left;
+            forgotScreen.Top = this.Top;
+            forgotScreen.WindowStartupLocation = WindowStartupLocation.Manual;
             forgotScreen.Show();
             this.Close();
         }
@@ -49,6 +52,9 @@ namespace VOID_STORE
         {
             // Kayıt ekranına yönlendirilecek
             Register registerScreen = new Register();
+            registerScreen.Left = this.Left;
+            registerScreen.Top = this.Top;
+            registerScreen.WindowStartupLocation = WindowStartupLocation.Manual;
             registerScreen.Show();
             this.Close();
         }
