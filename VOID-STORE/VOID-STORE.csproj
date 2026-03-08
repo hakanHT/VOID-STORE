@@ -9,4 +9,12 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="voidstoreimages\VOIDSTORE_NOBG_LOGO.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="voidstoreimages\VOIDSTORE_NOBG_LOGO.png" />
+  </ItemGroup>
+
 </Project>
