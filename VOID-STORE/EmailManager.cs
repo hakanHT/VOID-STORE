@@ -38,8 +38,9 @@ namespace VOID_STORE
 
                         // Kullanıcıya gönderilecek olan e-postanın HTML formatındaki görsel şablonu
                         string body = $@"
-                        <div style='font-family: Arial, sans-serif; background-color: #0A0A0C; color: #FFFFFF; padding: 30px; border-radius: 10px; max-width: 500px; margin: auto;'>
-                            <h2 style='text-align: center; color: #FFFFFF; border-bottom: 1px solid #333; padding-bottom: 10px;'>VOID STORE'a Hoşgeldiniz!</h2>
+                        <div style='font-family: Arial, sans-serif; background-color: #0A0A0C; color: #FFFFFF; padding: 30px; border-radius: 10px; max-width: 500px; margin: auto; text-align: center;'>
+                            <img src='https://raw.githubusercontent.com/ht-HAKAN/VOID-STORE/master/VOID-STORE/voidstoreimages/VOIDSTORE_NOBG_LOGO.png' alt='VOID STORE Logo' style='max-width: 250px; margin-bottom: 5px;' />
+                            <h2 style='color: #FFFFFF; border-bottom: 1px solid #333; padding-bottom: 15px; margin-top: 0;'>Hoşgeldiniz!</h2>
                             <p style='color: #CCCCCC; font-size: 14px;'>Hesabınızı başarıyla oluşturmak için doğrulama kodunuz aşağıdadır:</p>
                             <div style='background-color: #18181D; padding: 20px; text-align: center; border-radius: 5px; margin: 20px 0;'>
                                 <span style='font-size: 32px; font-weight: bold; color: #E81123; letter-spacing: 5px;'>{code}</span>
