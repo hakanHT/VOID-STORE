@@ -113,7 +113,7 @@ namespace VOID_STORE.Views
                         // Sorguyu veritabanına ilet ve kalıcı olarak güncelle.
                         DatabaseManager.ExecuteNonQuery(verifyUserQuery, new SqlParameter("@Email", _email));
 
-                        CustomError.ShowDialog("Hesabınız başarıyla doğrulandı! Şimdi giriş yapabilirsiniz.", "BAŞARILI");
+                        CustomError.ShowDialog("Hesabınız başarıyla doğrulandı! Şimdi giriş yapabilirsiniz.", "BAŞARILI", isSuccess: true);
 
                         // Başarılı doğrulama sonrası kullanıcıyı mevcut Login sayfasına yönlendir.
                         Login loginScreen = new Login();

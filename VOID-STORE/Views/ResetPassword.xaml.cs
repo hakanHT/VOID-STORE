@@ -76,7 +76,7 @@ namespace VOID_STORE.Views
 
             if (isSuccess)
             {
-                CustomError.ShowDialog("Şifreniz başarıyla değiştirildi. Yeni şifrenizle giriş yapabilirsiniz.", "BAŞARILI");
+                CustomError.ShowDialog("Şifreniz başarıyla değiştirildi. Yeni şifrenizle giriş yapabilirsiniz.", "BAŞARILI", isSuccess: true);
                 
                 // Başarılı olursa login sayfasına dön
                 Login loginScreen = new Login();
