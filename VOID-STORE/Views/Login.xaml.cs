@@ -94,18 +94,18 @@ namespace VOID_STORE.Views
             }
         }
 
-        private void ForgotPassword_Click(object sender, RoutedEventArgs e)
+        private void AccountRecovery_Click(object sender, RoutedEventArgs e)
         {
-            // sifresini unutan kullanicilar icin sifremi unuttum penceresini olustur
-            ForgotPassword forgotScreen = new ForgotPassword();
+            // giris yapamayan kullanicilar icin hesap kurtarma secenekleri penceresini ac
+            AccountRecovery recoveryScreen = new AccountRecovery();
             
             // pencerenin surukleme sirasinda bulundugu ekrandaki koordinatini yeni pencereye aktar
-            forgotScreen.Left = this.Left;
-            forgotScreen.Top = this.Top;
-            forgotScreen.WindowStartupLocation = WindowStartupLocation.Manual;
+            recoveryScreen.Left = this.Left;
+            recoveryScreen.Top = this.Top;
+            recoveryScreen.WindowStartupLocation = WindowStartupLocation.Manual;
             
             // ilgili pencereyi ac ve mevcut login ekranini kapat
-            forgotScreen.Show();
+            recoveryScreen.Show();
             this.Close();
         }
 

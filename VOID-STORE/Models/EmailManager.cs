@@ -112,5 +112,52 @@ namespace VOID_STORE.Models
                 throw;
             }
         }
+        // kullanici adi hatirlatma maili gonder
+        public static bool SendUsernameReminderEmail(string toEmail, string username)
+        {
+            try
+            {
+                var config = ConfigManager.GetEmailConfig();
+                
+                if (string.IsNullOrEmpty(config.Email) || string.IsNullOrEmpty(config.Password))
+                {
+                    throw new InvalidOperationException("eposta ayarlari eksik mail gonderilemiyor");
+                }
+
+                using (SmtpClient smtp = new SmtpClient(config.SmtpAddress, config.SmtpPort))
+                {
+                    smtp.EnableSsl = true;
+                    smtp.Credentials = new NetworkCredential(config.Email, config.Password);
+
+                    using (MailMessage mail = new MailMessage())
+                    {
+                        mail.From = new MailAddress(config.Email, "VOID STORE");
+                        mail.To.Add(toEmail);
+                        mail.Subject = "VOID STORE - Kullanıcı Adı Hatırlatma";
+
+                        string body = $@"
+                        <div style='font-family: Arial, sans-serif; background-color: #0A0A0C; color: #FFFFFF; padding: 30px; border-radius: 10px; max-width: 500px; margin: auto; text-align: center;'>
+                            <img src='https://raw.githubusercontent.com/ht-HAKAN/VOID-STORE/master/VOID-STORE/voidstoreimages/VOIDSTORE_NOBG_LOGO.png' alt='VOID STORE Logo' style='max-width: 250px; margin-bottom: 5px;' />
+                            <h2 style='color: #FFFFFF; border-bottom: 1px solid #333; padding-bottom: 15px; margin-top: 0;'>Kullanıcı Adı Hatırlatma</h2>
+                            <p style='color: #CCCCCC; font-size: 14px;'>Sistemimizde kayıtlı olan kullanıcı adınız aşağıdadır:</p>
+                            <div style='background-color: #18181D; padding: 20px; text-align: center; border-radius: 5px; margin: 20px 0;'>
+                                <span style='font-size: 24px; font-weight: bold; color: #00CC00;'>{username}</span>
+                            </div>
+                            <p style='color: #888888; font-size: 12px; text-align: center;'>Eğer bu işlemi siz talep etmediyseniz, lütfen bu mesaja itibar etmeyiniz.</p>
+                        </div>";
+
+                        mail.Body = body;
+                        mail.IsBodyHtml = true;
+
+                        smtp.Send(mail);
+                        return true; 
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }
