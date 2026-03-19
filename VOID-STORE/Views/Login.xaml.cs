@@ -8,18 +8,20 @@ namespace VOID_STORE.Views
 {
     public partial class Login : Window
     {
+        // giris isteklerini yonet
         private readonly LoginController _loginController;
 
         public Login()
         {
-            // login formu yuklendiginde icerisindeki gorsel bilesenleri baslat
+            // formu baslat
             InitializeComponent();
+            // giris denetleyicisini hazirla
             _loginController = new LoginController();
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // pencereyi suruklemek icin
+            // pencereyi surukle
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
@@ -28,105 +30,109 @@ namespace VOID_STORE.Views
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            // login penceresinin ekrandaki durumunu simge durumuna kucult
+            // pencereyi kucult
             WindowState = WindowState.Minimized;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            // kapatma butonuna bastiginda uygulamayi kapat
+            // uygulamayi kapat
             Application.Current.Shutdown();
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            // kullanici adi veya eposta login icin iki secenek de gecerli
+            // giris bilgilerini al
             string usernameOrEmail = txtUsername.Text.Trim();
             string password = txtPassword.Password;
 
-            // bos alan kontrolu bilgilerin eksiksiz girildigini denetle
+            // bos alanlari kontrol et
             if (string.IsNullOrEmpty(usernameOrEmail) || string.IsNullOrEmpty(password))
             {
-                // bilgiler eksikse ekranda ozel bir hata penceresi goster ve islemi durdur
+                // eksik bilgiyi bildir
                 CustomError.ShowDialog("Lütfen kullanıcı adı ve şifrenizi girin.", "GİRİŞ HATASI");
                 return;
             }
 
             try
             {
-                // controllera bilgileri yolla ve dogrulama sonucunu al
+                // kullanici kaydini denetle
                 bool isValidUser = _loginController.ValidateUser(usernameOrEmail, password, out bool isEmailVerified, out bool isAdmin);
 
                 if (isValidUser)
                 {
+                    // dogrulama durumunu kontrol et
                     if (!isEmailVerified)
                     {
-                        CustomError.ShowDialog("Lütfen e-posta adresinize gönderilen kod ile hesabınızı doğrulayın.", "DOĞRULANMAMIŞ HESAP");
+                        // dogrulama eksigini bildir
+                        CustomError.ShowDialog("Lütfen e-posta adresinize gönderilen doğrulama kodu ile hesabınızı onaylayın.", "DOĞRULANMAMIŞ HESAP");
                         return;
                     }
 
+                    // yonetici hesabini ayir
                     if (isAdmin)
                     {
-                        MessageBoxResult result = MessageBox.Show("ADMİN ALGILANDI.\n\nYönetici paneline gitmek için 'Evet'e, kullanıcı mağazasına gitmek için 'Hayır'a tıklayın.", "Yönetici Girişi", MessageBoxButton.YesNo, MessageBoxImage.Information);
-                        
-                        if (result == MessageBoxResult.Yes)
-                        {
-                            // admin paneline gecisi buraya ekle
-                            CustomError.ShowDialog("Admin paneli henüz yapım aşamasında, mağazaya yönlendiriliyorsunuz.", "BİLGİ");
-                        }
+                        // secim ekranini ac
+                        AdminRoleSelection adminRoleSelection = new AdminRoleSelection();
+                        adminRoleSelection.Left = Left;
+                        adminRoleSelection.Top = Top;
+                        adminRoleSelection.WindowStartupLocation = WindowStartupLocation.Manual;
+                        adminRoleSelection.Show();
+                        Close();
+                        return;
                     }
 
-                    // basarili giriste ana uygulama ekrani
+                    // ana pencereyi ac
                     MainAppWindow mainWindow = new MainAppWindow();
-                    // ana ekrani gorunur kil
                     mainWindow.Show();
-                    // islemi biten mevcut login ekranini kapat
-                    this.Close();
+                    // giris ekranini kapat
+                    Close();
                 }
                 else
                 {
+                    // hatali girisi bildir
                     CustomError.ShowDialog("Kullanıcı adı veya şifre hatalı.", "GİRİŞ BAŞARISIZ");
                 }
             }
             catch (Exception ex)
             {
-                CustomError.ShowDialog("Bağlantı sırasında hata oluştu: " + ex.Message, "SİSTEM HATASI");
+                // sistem hatasini goster
+                CustomError.ShowDialog("Bağlantı sırasında bir hata oluştu: " + ex.Message, "SİSTEM HATASI");
             }
         }
 
         private void AccountRecovery_Click(object sender, RoutedEventArgs e)
         {
-            // giris yapamayan kullanicilar icin hesap kurtarma secenekleri penceresini ac
+            // kurtarma ekranini ac
             AccountRecovery recoveryScreen = new AccountRecovery();
-            
-            // pencerenin surukleme sirasinda bulundugu ekrandaki koordinatini yeni pencereye aktar
-            recoveryScreen.Left = this.Left;
-            recoveryScreen.Top = this.Top;
+
+            // mevcut konumu koru
+            recoveryScreen.Left = Left;
+            recoveryScreen.Top = Top;
             recoveryScreen.WindowStartupLocation = WindowStartupLocation.Manual;
-            
-            // ilgili pencereyi ac ve mevcut login ekranini kapat
+
+            // yeni ekrana gec
             recoveryScreen.Show();
-            this.Close();
+            Close();
         }
 
         private void Register_Click(object sender, RoutedEventArgs e)
         {
-            // kayit numarasina gecis yap
+            // kayit ekranini ac
             Register registerScreen = new Register();
-            registerScreen.Left = this.Left;
-            registerScreen.Top = this.Top;
+            registerScreen.Left = Left;
+            registerScreen.Top = Top;
             registerScreen.WindowStartupLocation = WindowStartupLocation.Manual;
             registerScreen.Show();
-            this.Close();
+            Close();
         }
 
         private void GuestLogin_Click(object sender, RoutedEventArgs e)
         {
-            // misafir girisi dogrudan ana sayfaya atar
+            // misafir olarak devam et
             MainAppWindow mainWindow = new MainAppWindow();
             mainWindow.Show();
-            this.Close(); // mevcut login formunu kapat
+            Close();
         }
     }
 }
-
