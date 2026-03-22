@@ -67,13 +67,14 @@ namespace VOID_STORE.Views
 
                     if (isAdmin)
                     {
-                        MessageBoxResult result = MessageBox.Show("ADMİN ALGILANDI.\n\nYönetici paneline gitmek için 'Evet'e, kullanıcı mağazasına gitmek için 'Hayır'a tıklayın.", "Yönetici Girişi", MessageBoxButton.YesNo, MessageBoxImage.Information);
-                        
-                        if (result == MessageBoxResult.Yes)
-                        {
-                            // admin paneline gecisi buraya ekle
-                            CustomError.ShowDialog("Admin paneli henüz yapım aşamasında, mağazaya yönlendiriliyorsunuz.", "BİLGİ");
-                        }
+                        // admin secim ekranina gec
+                        AdminRoleSelection adminRoleSelection = new AdminRoleSelection();
+                        adminRoleSelection.Left = this.Left;
+                        adminRoleSelection.Top = this.Top;
+                        adminRoleSelection.WindowStartupLocation = WindowStartupLocation.Manual;
+                        adminRoleSelection.Show();
+                        this.Close();
+                        return;
                     }
 
                     // basarili giriste ana uygulama ekrani

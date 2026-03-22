@@ -1,0 +1,557 @@
+<Window x:Class="VOID_STORE.Views.AdminDashboard"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="VOID STORE ADMIN"
+        Height="900"
+        Width="1500"
+        MinHeight="820"
+        MinWidth="1280"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent">
+
+    <Window.Resources>
+        <LinearGradientBrush x:Key="PanelBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#121215" Offset="0"/>
+            <GradientStop Color="#0F0F13" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#15151A" Offset="0"/>
+            <GradientStop Color="#111116" Offset="1"/>
+        </LinearGradientBrush>
+
+        <Style x:Key="TitleBarButton" TargetType="Button">
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Foreground" Value="#F5F7FA"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="Transparent" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#18181D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SidebarNavButton" TargetType="Button">
+            <Setter Property="Height" Value="54"/>
+            <Setter Property="Foreground" Value="#AEB6C2"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="18,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="3"
+                                    Margin="0,12,0,12"
+                                    Background="Transparent"
+                                    CornerRadius="3"/>
+                            <Border x:Name="Surface"
+                                    Grid.Column="1"
+                                    Background="Transparent"
+                                    CornerRadius="14">
+                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#18181D"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SidebarNavButtonSelected" TargetType="Button" BasedOn="{StaticResource SidebarNavButton}">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="3"
+                                    Margin="0,12,0,12"
+                                    Background="#FFFFFF"
+                                    CornerRadius="3"/>
+                            <Border x:Name="Surface"
+                                    Grid.Column="1"
+                                    Background="#18181D"
+                                    CornerRadius="14">
+                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#202026"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ProfileToggleButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Surface"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="18"
+                                Padding="10,8">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#15151A"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="Transparent"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#15151A"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="Transparent"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ProfileMenuButton" TargetType="Button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="Transparent" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#1E1E24"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CommandTileButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#101014"/>
+            <Setter Property="BorderBrush" Value="#1C1C22"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="22"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="TileLift" Y="0"/>
+                            </Border.RenderTransform>
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="TileShadow"
+                                                  BlurRadius="18"
+                                                  ShadowDepth="0"
+                                                  Color="#000000"
+                                                  Opacity="0.28"/>
+                            </Border.Effect>
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#141419"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#2B2B33"/>
+                            </Trigger>
+                            <EventTrigger RoutedEvent="MouseEnter">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="TileLift" Storyboard.TargetProperty="Y" To="-6" Duration="0:0:0.18"/>
+                                        <DoubleAnimation Storyboard.TargetName="TileShadow" Storyboard.TargetProperty="BlurRadius" To="26" Duration="0:0:0.18"/>
+                                        <DoubleAnimation Storyboard.TargetName="TileShadow" Storyboard.TargetProperty="Opacity" To="0.46" Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <EventTrigger RoutedEvent="MouseLeave">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="TileLift" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.18"/>
+                                        <DoubleAnimation Storyboard.TargetName="TileShadow" Storyboard.TargetProperty="BlurRadius" To="18" Duration="0:0:0.18"/>
+                                        <DoubleAnimation Storyboard.TargetName="TileShadow" Storyboard.TargetProperty="Opacity" To="0.28" Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="#0A0A0C" BorderBrush="#18181D" BorderThickness="1" CornerRadius="16">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="34"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="12,0,10,0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" Panel.ZIndex="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="VOID STORE"
+                           Foreground="#6E7682"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="6,0,0,0"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource TitleBarButton}" Click="MinimizeButton_Click">
+                        <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="#F5F7FA"/>
+                    </Button>
+                    <Button Style="{StaticResource TitleBarButton}" Click="ToggleWindowStateButton_Click">
+                        <TextBlock Text="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="#F5F7FA"/>
+                    </Button>
+                    <Button Click="CloseButton_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource TitleBarButton}">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Surface" Background="Transparent" CornerRadius="8">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Surface" Property="Background" Value="#E81123"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="#F5F7FA"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="22,14,22,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="290"/>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Background="#101014" BorderBrush="#1E1E24" BorderThickness="1" CornerRadius="24" Padding="20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="24"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Image Source="../voidstoreimages/VOIDSTORE_NOBG_LOGO.png"
+                               Height="154"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Center"
+                               Margin="0,4,0,10"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                        <StackPanel Grid.Row="2">
+                            <Button Content="Dashboard" Style="{StaticResource SidebarNavButtonSelected}" Margin="0,0,0,8"/>
+                            <Button Content="Oyun Yönetimi" Style="{StaticResource SidebarNavButton}" Click="GamesSectionButton_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="0,2,0,18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Yönetim Paneli" Foreground="White" FontSize="34" FontWeight="Bold" Margin="0,8,0,0"/>
+                            <TextBlock Text="Oyun ekleme, güncelleme ve yönetim işlemlerini buradan gerçekleştirebilirsiniz."
+                                       Foreground="#A2ACB9"
+                                       FontSize="13"
+                                       Margin="0,8,0,0"/>
+                        </StackPanel>
+
+                        <ToggleButton x:Name="ProfileMenuToggle" Grid.Column="1" Style="{StaticResource ProfileToggleButton}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="46"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="18"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid Width="46" Height="46">
+                                    <Ellipse Fill="#FFFFFF"/>
+                                    <Ellipse Stroke="#FFFFFF" StrokeThickness="1"/>
+                                    <TextBlock Text="V" Foreground="#0A0A0C" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Text="VOIDSTORE" Foreground="White" FontSize="13" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Admin" Foreground="#8D95A1" FontSize="12" Margin="0,3,0,0"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="4"
+                                           Text="&#xE70D;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           Foreground="#D7DDE5"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"/>
+                            </Grid>
+                        </ToggleButton>
+
+                        <Popup PlacementTarget="{Binding ElementName=ProfileMenuToggle}"
+                               Placement="Bottom"
+                               VerticalOffset="10"
+                               IsOpen="{Binding IsChecked, ElementName=ProfileMenuToggle}"
+                               StaysOpen="False"
+                               AllowsTransparency="True"
+                               PopupAnimation="Fade">
+                            <Border Background="#0F141B"
+                                    BorderBrush="#18202A"
+                                    BorderThickness="1"
+                                    CornerRadius="16"
+                                    Padding="8"
+                                    MinWidth="206">
+                                <StackPanel>
+                                    <Button Content="Profil Düzenle" Style="{StaticResource ProfileMenuButton}" Click="ProfileEditButton_Click"/>
+                                    <Button Content="Mağazaya Dön" Style="{StaticResource ProfileMenuButton}" Click="StoreButton_Click"/>
+                                    <Border Height="1" Background="#18212B" Margin="8,6"/>
+                                    <Button Content="Çıkış Yap" Style="{StaticResource ProfileMenuButton}" Click="LogoutButton_Click"/>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
+                    <Border Grid.Row="1"
+                            Background="#121215"
+                            BorderBrush="#222228"
+                            BorderThickness="1"
+                            CornerRadius="28"
+                            Padding="26"
+                            Margin="0,0,0,18">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel MaxWidth="620">
+                                <TextBlock Text="Mağaza Yönetimi" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,12,0,0"/>
+                                <TextBlock Text="Sistemdeki tüm oyunları görüntüleyebilir, düzenleyebilir ve durumlarını kontrol edebilirsiniz."
+                                           Foreground="#95A0AE"
+                                           FontSize="13"
+                                           Margin="0,10,0,0"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                            <UniformGrid Grid.Column="1" Rows="1" Columns="3" Margin="26,0,0,0" VerticalAlignment="Top">
+                                <Border Background="#18181D" CornerRadius="18" Padding="18,16" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Toplam Oyun" Foreground="#85909D" FontSize="11"/>
+                                        <TextBlock x:Name="txtTotalGamesValue" Text="0" Foreground="White" FontSize="30" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#18181D" CornerRadius="18" Padding="18,16" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Listelenmiş Oyun" Foreground="#85909D" FontSize="11"/>
+                                        <TextBlock x:Name="txtActiveGamesValue" Text="0" Foreground="#35BC67" FontSize="30" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#18181D" CornerRadius="18" Padding="18,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Liste Dışı Oyun" Foreground="#85909D" FontSize="11"/>
+                                        <TextBlock x:Name="txtPassiveGamesValue" Text="0" Foreground="#E07C87" FontSize="30" FontWeight="Bold" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="2"
+                            Background="#101014"
+                            BorderBrush="#1E1E24"
+                            BorderThickness="1"
+                            CornerRadius="28"
+                            Padding="28">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="22"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="İşlemler" Foreground="White" FontSize="22" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Devam etmek istediğiniz işlemi seçin" Foreground="#8F98A5" FontSize="13" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="18"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="18"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Button Grid.Column="0" Style="{StaticResource CommandTileButton}" Click="OpenCreateViewButton_Click">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Border Width="60" Height="60" Background="#17171C" CornerRadius="18" HorizontalAlignment="Left">
+                                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Row="1" Margin="0,22,0,0">
+                                            <TextBlock Text="Oyun Ekle" Foreground="White" FontSize="22" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Yeni oyun kaydı oluştur" Foreground="#8E98A6" FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Grid Grid.Row="2" Margin="0,26,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Yeni kayıt aç" Foreground="#C9D1DA" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="20" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Grid>
+                                </Button>
+
+                                <Button Grid.Column="2" Style="{StaticResource CommandTileButton}" Click="OpenEditViewButton_Click">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Border Width="60" Height="60" Background="#17171C" CornerRadius="18" HorizontalAlignment="Left">
+                                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Row="1" Margin="0,22,0,0">
+                                            <TextBlock Text="Oyun Güncelle" Foreground="White" FontSize="22" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Mevcut oyun bilgilerini düzenle" Foreground="#8E98A6" FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Grid Grid.Row="2" Margin="0,26,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Güncelleme Sayfasını Aç" Foreground="#C9D1DA" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="20" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Grid>
+                                </Button>
+
+                                <Button Grid.Column="4" Style="{StaticResource CommandTileButton}" Click="OpenDeleteViewButton_Click">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Border Width="60" Height="60" Background="#17171C" CornerRadius="18" HorizontalAlignment="Left">
+                                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Row="1" Margin="0,22,0,0">
+                                            <TextBlock Text="Oyun Yönetimi" Foreground="White" FontSize="22" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Oyunları sil veya aktif pasif durumunu değiştir" Foreground="#8E98A6" FontSize="13" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Grid Grid.Row="2" Margin="0,26,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Yönetimi aç" Foreground="#C9D1DA" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="20" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Grid>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
