@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -443,7 +443,7 @@ namespace VOID_STORE.Views
             string recommendedText = string.IsNullOrWhiteSpace(state.RecommendedRequirements) ? "Belirtilmedi" : state.RecommendedRequirements.Trim();
             string languagesText = string.IsNullOrWhiteSpace(state.SupportedLanguages) ? "Belirtilmedi" : state.SupportedLanguages.Trim();
 
-            return $"Oyun Adı  {state.Title}\nYapımcı  {developerText}\nYayıncı  {publisherText}\nFiyat  {priceText}\nÇıkış Tarihi  {releaseText}\nFragman  {trailerText}\n\nMinimum Sistem Gereksinimleri\n{minimumText}\n\nÖnerilen Sistem Gereksinimleri\n{recommendedText}\n\nDesteklenen Diller\n{languagesText}";
+            return $"Genel Bilgiler\nOyun Adı  {state.Title}\nYapımcı  {developerText}\nYayıncı  {publisherText}\nFiyat  {priceText}\nÇıkış Tarihi  {releaseText}\nFragman  {trailerText}\n\nMinimum Sistem Gereksinimleri\n{minimumText}\n\nÖnerilen Sistem Gereksinimleri\n{recommendedText}\n\nDesteklenen Diller\n{languagesText}";
         }
 
         private void SetPlatformBadges(WrapPanel panel, IEnumerable<string> platforms)
@@ -507,3 +507,4 @@ namespace VOID_STORE.Views
         }
     }
 }
+
