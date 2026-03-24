@@ -1,9 +1,6 @@
-using System;
 using System.Windows;
 using System.Windows.Input;
-
-using VOID_STORE.Models;
-
+using System.Windows.Media;
 
 namespace VOID_STORE.Views
 {
@@ -12,22 +9,42 @@ namespace VOID_STORE.Views
         public CustomError(string title, string message, bool isSuccess = false)
         {
             InitializeComponent();
-            
-            // hata başlığını ve mesajını ayarla
-            txtTitle.Text = title.ToUpper();
+
+        // pencere metnini hazirla
+            txtTitle.Text = title.ToUpperInvariant();
             txtMessage.Text = message;
 
-            // Eğer başarılı bir işlemse, yazıları ve butonları yeşil yap
             if (isSuccess)
             {
-                var greenBrush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#00CC00")); // Canlı Yeşil
-                txtTitle.Foreground = greenBrush;
-                btnOk.Background = greenBrush;
+        // basarili islemleri canli yesille goster
+                Brush successBrush = new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0x00));
+                txtTitle.Foreground = successBrush;
+                btnOk.Background = successBrush;
+                btnOk.BorderBrush = successBrush;
             }
+        }
+
+        public static void ShowDialog(string message, string title = "BILGI", bool isSuccess = false, Window? owner = null)
+        {
+            CustomError errorWindow = new CustomError(title, message, isSuccess);
+            Window? dialogOwner = owner ?? GetActiveWindow();
+
+            if (dialogOwner != null)
+            {
+                errorWindow.Owner = dialogOwner;
+                errorWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            }
+            else
+            {
+                errorWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+
+            errorWindow.ShowDialog();
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+        // basliktan pencereyi tasi
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
@@ -36,15 +53,27 @@ namespace VOID_STORE.Views
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            // Mesaj kutusunu kapat
-            this.Close();
+        // pencereyi kapat
+            Close();
         }
 
-        // MessageBox.Show gibi kolay kullanım için statik bir metot
-        public static void ShowDialog(string message, string title = "HATA", bool isSuccess = false)
+        private static Window? GetActiveWindow()
         {
-            CustomError errorWindow = new CustomError(title, message, isSuccess);
-            errorWindow.ShowDialog(); // ShowDialog ile ekranı kitler, kapanana kadar arkaya tıklanamaz
+        // etkin pencereyi bul
+            if (Application.Current == null)
+            {
+                return null;
+            }
+
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window.IsActive)
+                {
+                    return window;
+                }
+            }
+
+            return Application.Current.MainWindow;
         }
     }
 }

@@ -7,24 +7,38 @@ namespace VOID_STORE.Models
     {
         public static void EnsureSchema()
         {
-        // eksik tablo ve alanlari tamamla
+        // veritabani alanlarini tamamla
+            EnsureCategoryColumn();
             EnsurePublisherColumn();
             EnsureApprovalStatusColumn();
             EnsureMinimumRequirementsColumn();
             EnsureRecommendedRequirementsColumn();
             EnsureSupportedLanguagesColumn();
+            EnsureGameFeaturesColumn();
             EnsureGamePlatformsTable();
             EnsureGameDraftsTable();
+            EnsureDraftCategoryColumn();
             EnsureDraftMinimumRequirementsColumn();
             EnsureDraftRecommendedRequirementsColumn();
             EnsureDraftSupportedLanguagesColumn();
+            EnsureDraftGameFeaturesColumn();
             EnsureGameDraftPlatformsTable();
             NormalizeExistingGames();
         }
 
+        private static void EnsureCategoryColumn()
+        {
+        // kategori alanini kontrol et
+            if (!ColumnExists("Games", "Category"))
+            {
+                DatabaseManager.ExecuteNonQuery(
+                    "ALTER TABLE Games ADD COLUMN Category VARCHAR(50) NOT NULL DEFAULT 'Aksiyon' AFTER Title");
+            }
+        }
+
         private static void EnsurePublisherColumn()
         {
-        // yayinci alanini eksikse ekle
+        // yayinci alanini kontrol et
             if (!ColumnExists("Games", "Publisher"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -34,7 +48,7 @@ namespace VOID_STORE.Models
 
         private static void EnsureApprovalStatusColumn()
         {
-        // onay durumu alanini eksikse ekle
+        // onay durumu alanini kontrol et
             if (!ColumnExists("Games", "ApprovalStatus"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -44,7 +58,7 @@ namespace VOID_STORE.Models
 
         private static void EnsureMinimumRequirementsColumn()
         {
-        // minimum gereksinim alanini eksikse ekle
+        // minimum gereksinim alanini kontrol et
             if (!ColumnExists("Games", "MinimumRequirements"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -54,7 +68,7 @@ namespace VOID_STORE.Models
 
         private static void EnsureRecommendedRequirementsColumn()
         {
-        // onerilen gereksinim alanini eksikse ekle
+        // onerilen gereksinim alanini kontrol et
             if (!ColumnExists("Games", "RecommendedRequirements"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -64,7 +78,7 @@ namespace VOID_STORE.Models
 
         private static void EnsureSupportedLanguagesColumn()
         {
-        // dil alanini eksikse ekle
+        // diller alanini kontrol et
             if (!ColumnExists("Games", "SupportedLanguages"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -72,9 +86,19 @@ namespace VOID_STORE.Models
             }
         }
 
+        private static void EnsureGameFeaturesColumn()
+        {
+        // ozellik alanini kontrol et
+            if (!ColumnExists("Games", "GameFeatures"))
+            {
+                DatabaseManager.ExecuteNonQuery(
+                    "ALTER TABLE Games ADD COLUMN GameFeatures TEXT NULL AFTER SupportedLanguages");
+            }
+        }
+
         private static void EnsureGamePlatformsTable()
         {
-        // platform tablosunu eksikse olustur
+        // platform tablosunu kontrol et
             DatabaseManager.ExecuteNonQuery(
                 @"CREATE TABLE IF NOT EXISTS GamePlatforms (
                     GamePlatformId INT NOT NULL AUTO_INCREMENT,
@@ -90,12 +114,13 @@ namespace VOID_STORE.Models
 
         private static void EnsureGameDraftsTable()
         {
-        // yeni surum tablosunu eksikse olustur
+        // guncelleme tablosunu kontrol et
             DatabaseManager.ExecuteNonQuery(
                 @"CREATE TABLE IF NOT EXISTS GameDrafts (
                     GameDraftId INT NOT NULL AUTO_INCREMENT,
                     GameId INT NOT NULL,
                     Title VARCHAR(100) NOT NULL,
+                    Category VARCHAR(50) NOT NULL DEFAULT 'Aksiyon',
                     Description TEXT NOT NULL,
                     Price DECIMAL(18,2) NOT NULL,
                     CoverImagePath VARCHAR(255) NULL,
@@ -106,6 +131,7 @@ namespace VOID_STORE.Models
                     MinimumRequirements TEXT NULL,
                     RecommendedRequirements TEXT NULL,
                     SupportedLanguages TEXT NULL,
+                    GameFeatures TEXT NULL,
                     DraftStatus VARCHAR(20) NOT NULL DEFAULT 'pending',
                     CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     UpdatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -117,9 +143,19 @@ namespace VOID_STORE.Models
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
         }
 
+        private static void EnsureDraftCategoryColumn()
+        {
+        // taslak kategori alanini kontrol et
+            if (!ColumnExists("GameDrafts", "Category"))
+            {
+                DatabaseManager.ExecuteNonQuery(
+                    "ALTER TABLE GameDrafts ADD COLUMN Category VARCHAR(50) NOT NULL DEFAULT 'Aksiyon' AFTER Title");
+            }
+        }
+
         private static void EnsureDraftMinimumRequirementsColumn()
         {
-        // yeni surum minimum gereksinim alanini eksikse ekle
+        // taslak minimum gereksinim alanini kontrol et
             if (!ColumnExists("GameDrafts", "MinimumRequirements"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -129,7 +165,7 @@ namespace VOID_STORE.Models
 
         private static void EnsureDraftRecommendedRequirementsColumn()
         {
-        // yeni surum onerilen gereksinim alanini eksikse ekle
+        // taslak onerilen gereksinim alanini kontrol et
             if (!ColumnExists("GameDrafts", "RecommendedRequirements"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -139,7 +175,7 @@ namespace VOID_STORE.Models
 
         private static void EnsureDraftSupportedLanguagesColumn()
         {
-        // yeni surum dil alanini eksikse ekle
+        // taslak diller alanini kontrol et
             if (!ColumnExists("GameDrafts", "SupportedLanguages"))
             {
                 DatabaseManager.ExecuteNonQuery(
@@ -147,9 +183,19 @@ namespace VOID_STORE.Models
             }
         }
 
+        private static void EnsureDraftGameFeaturesColumn()
+        {
+        // taslak ozellik alanini kontrol et
+            if (!ColumnExists("GameDrafts", "GameFeatures"))
+            {
+                DatabaseManager.ExecuteNonQuery(
+                    "ALTER TABLE GameDrafts ADD COLUMN GameFeatures TEXT NULL AFTER SupportedLanguages");
+            }
+        }
+
         private static void EnsureGameDraftPlatformsTable()
         {
-        // yeni surum platform tablosunu eksikse olustur
+        // taslak platform tablosunu kontrol et
             DatabaseManager.ExecuteNonQuery(
                 @"CREATE TABLE IF NOT EXISTS GameDraftPlatforms (
                     GameDraftPlatformId INT NOT NULL AUTO_INCREMENT,
@@ -165,14 +211,20 @@ namespace VOID_STORE.Models
 
         private static void NormalizeExistingGames()
         {
-        // eski kayitlari onayli duruma getir
+        // eski kayitlari onayli hale getir
             DatabaseManager.ExecuteNonQuery(
                 "UPDATE Games SET ApprovalStatus = 'approved' WHERE ApprovalStatus IS NULL OR TRIM(ApprovalStatus) = ''");
+
+            DatabaseManager.ExecuteNonQuery(
+                "UPDATE Games SET Category = 'Aksiyon' WHERE Category IS NULL OR TRIM(Category) = ''");
+
+            DatabaseManager.ExecuteNonQuery(
+                "UPDATE GameDrafts SET Category = 'Aksiyon' WHERE Category IS NULL OR TRIM(Category) = ''");
         }
 
         private static bool ColumnExists(string tableName, string columnName)
         {
-        // alanin varligini denetle
+        // alan var mi bak
             object result = DatabaseManager.ExecuteScalar(
                 @"SELECT COUNT(*)
                   FROM INFORMATION_SCHEMA.COLUMNS

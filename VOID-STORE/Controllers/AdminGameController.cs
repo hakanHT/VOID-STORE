@@ -20,15 +20,16 @@ namespace VOID_STORE.Controllers
 
         public void EnsureSchema()
         {
-        // gerekli tablo ve alanlari hazirla
+        // veritabani alanlarini kontrol et
             AdminGameSchemaManager.EnsureSchema();
         }
 
         public int CreateGame(GameCreateRequest request)
         {
-        // yeni oyun kaydini onaya hazirla
+        // yeni oyunu onay bekleyen kayit olarak ekle
             string validationMessage = ValidateGameInput(
                 request.Title,
+                request.Category,
                 request.PriceText,
                 request.Description,
                 request.Developer,
@@ -66,13 +67,14 @@ namespace VOID_STORE.Controllers
             {
                 using MySqlCommand insertGameCommand = new MySqlCommand(
                     @"INSERT INTO Games
-                        (Title, Description, Price, CoverImagePath, Developer, Publisher, ReleaseDate, IsActive, ApprovalStatus, TrailerUrl, MinimumRequirements, RecommendedRequirements, SupportedLanguages)
+                        (Title, Category, Description, Price, CoverImagePath, Developer, Publisher, ReleaseDate, IsActive, ApprovalStatus, TrailerUrl, MinimumRequirements, RecommendedRequirements, SupportedLanguages, GameFeatures)
                       VALUES
-                        (@Title, @Description, @Price, NULL, @Developer, @Publisher, @ReleaseDate, 1, 'pending', @TrailerUrl, @MinimumRequirements, @RecommendedRequirements, @SupportedLanguages);",
+                        (@Title, @Category, @Description, @Price, NULL, @Developer, @Publisher, @ReleaseDate, 1, 'pending', @TrailerUrl, @MinimumRequirements, @RecommendedRequirements, @SupportedLanguages, @GameFeatures);",
                     connection,
                     transaction);
 
                 insertGameCommand.Parameters.AddWithValue("@Title", request.Title.Trim());
+                insertGameCommand.Parameters.AddWithValue("@Category", GameCategoryCatalog.Normalize(request.Category));
                 insertGameCommand.Parameters.AddWithValue("@Description", request.Description.Trim());
                 insertGameCommand.Parameters.AddWithValue("@Price", price);
                 insertGameCommand.Parameters.AddWithValue("@Developer", request.Developer.Trim());
@@ -84,6 +86,7 @@ namespace VOID_STORE.Controllers
                 insertGameCommand.Parameters.AddWithValue("@MinimumRequirements", request.MinimumRequirements.Trim());
                 insertGameCommand.Parameters.AddWithValue("@RecommendedRequirements", request.RecommendedRequirements.Trim());
                 insertGameCommand.Parameters.AddWithValue("@SupportedLanguages", request.SupportedLanguages.Trim());
+                insertGameCommand.Parameters.AddWithValue("@GameFeatures", SerializeFeatures(request.Features));
 
                 insertGameCommand.ExecuteNonQuery();
                 createdGameId = Convert.ToInt32(insertGameCommand.LastInsertedId);
@@ -128,7 +131,7 @@ namespace VOID_STORE.Controllers
 
         public IReadOnlyList<AdminGameListItem> GetApprovedGames(string searchText)
         {
-        // yayinda olan oyunlari listele
+        // yayindaki oyun listesini getir
             EnsureSchema();
 
             string normalizedSearch = searchText?.Trim() ?? string.Empty;
@@ -193,7 +196,7 @@ namespace VOID_STORE.Controllers
 
         public IReadOnlyList<AdminGameListItem> GetPendingReviewGames(string searchText)
         {
-        // onay bekleyen kayitlari listele
+        // onay bekleyen kayitlari getir
             EnsureSchema();
 
             string normalizedSearch = searchText?.Trim() ?? string.Empty;
@@ -269,7 +272,7 @@ namespace VOID_STORE.Controllers
 
         public IReadOnlyList<AdminGameListItem> GetListedGames(string searchText)
         {
-        // listelenen oyunlari getir
+        // yayinda olan oyunlari getir
             return GetApprovedVisibilityGames(searchText, true);
         }
 
@@ -281,7 +284,7 @@ namespace VOID_STORE.Controllers
 
         public GameManageDetail GetManagementDetail(AdminGameListItem item)
         {
-        // secilen kaydin detaylarini ekrana hazirla
+        // secilen kaydin ayrintisini topla
             EnsureSchema();
 
             if (item.IsPendingNewGame)
@@ -336,7 +339,7 @@ namespace VOID_STORE.Controllers
 
         public GameEditState GetGameEditState(int gameId)
         {
-        // guncelleme ekraninin verilerini hazirla
+        // duzenleme ekraninin verisini hazirla
             EnsureSchema();
 
             DataTable draftTable = DatabaseManager.ExecuteQuery(
@@ -344,6 +347,7 @@ namespace VOID_STORE.Controllers
                     GameDraftId,
                     GameId,
                     Title,
+                    Category,
                     Description,
                     Price,
                     CoverImagePath,
@@ -354,6 +358,7 @@ namespace VOID_STORE.Controllers
                     MinimumRequirements,
                     RecommendedRequirements,
                     SupportedLanguages,
+                    GameFeatures,
                     DraftStatus
                   FROM GameDrafts
                   WHERE GameId = @GameId
@@ -370,6 +375,7 @@ namespace VOID_STORE.Controllers
                 {
                     GameId = gameId,
                     Title = draftRow["Title"]?.ToString() ?? string.Empty,
+                    Category = GameCategoryCatalog.Normalize(draftRow["Category"]?.ToString() ?? string.Empty),
                     Description = draftRow["Description"]?.ToString() ?? string.Empty,
                     PriceText = FormatPriceText(draftRow["Price"]),
                     Developer = draftRow["Developer"]?.ToString() ?? string.Empty,
@@ -379,6 +385,7 @@ namespace VOID_STORE.Controllers
                     MinimumRequirements = draftRow["MinimumRequirements"] == DBNull.Value ? string.Empty : draftRow["MinimumRequirements"]?.ToString() ?? string.Empty,
                     RecommendedRequirements = draftRow["RecommendedRequirements"] == DBNull.Value ? string.Empty : draftRow["RecommendedRequirements"]?.ToString() ?? string.Empty,
                     SupportedLanguages = draftRow["SupportedLanguages"] == DBNull.Value ? string.Empty : draftRow["SupportedLanguages"]?.ToString() ?? string.Empty,
+                    Features = ParseFeatures(draftRow["GameFeatures"] == DBNull.Value ? string.Empty : draftRow["GameFeatures"]?.ToString()),
                     CoverImagePath = draftRow["CoverImagePath"] == DBNull.Value ? string.Empty : draftRow["CoverImagePath"]?.ToString() ?? string.Empty,
                     CoverImageSourcePath = GameAssetManager.GetAbsoluteAssetPath(draftRow["CoverImagePath"] == DBNull.Value ? string.Empty : draftRow["CoverImagePath"]?.ToString() ?? string.Empty),
                     Platforms = GetDraftPlatforms(draftId),
@@ -391,6 +398,7 @@ namespace VOID_STORE.Controllers
                 @"SELECT
                     GameId,
                     Title,
+                    Category,
                     Description,
                     Price,
                     CoverImagePath,
@@ -400,7 +408,8 @@ namespace VOID_STORE.Controllers
                     TrailerUrl,
                     MinimumRequirements,
                     RecommendedRequirements,
-                    SupportedLanguages
+                    SupportedLanguages,
+                    GameFeatures
                   FROM Games
                   WHERE GameId = @GameId
                     AND ApprovalStatus = 'approved'
@@ -418,6 +427,7 @@ namespace VOID_STORE.Controllers
             {
                 GameId = gameId,
                 Title = gameRow["Title"]?.ToString() ?? string.Empty,
+                Category = GameCategoryCatalog.Normalize(gameRow["Category"]?.ToString() ?? string.Empty),
                 Description = gameRow["Description"]?.ToString() ?? string.Empty,
                 PriceText = FormatPriceText(gameRow["Price"]),
                 Developer = gameRow["Developer"]?.ToString() ?? string.Empty,
@@ -427,6 +437,7 @@ namespace VOID_STORE.Controllers
                 MinimumRequirements = gameRow["MinimumRequirements"] == DBNull.Value ? string.Empty : gameRow["MinimumRequirements"]?.ToString() ?? string.Empty,
                 RecommendedRequirements = gameRow["RecommendedRequirements"] == DBNull.Value ? string.Empty : gameRow["RecommendedRequirements"]?.ToString() ?? string.Empty,
                 SupportedLanguages = gameRow["SupportedLanguages"] == DBNull.Value ? string.Empty : gameRow["SupportedLanguages"]?.ToString() ?? string.Empty,
+                Features = ParseFeatures(gameRow["GameFeatures"] == DBNull.Value ? string.Empty : gameRow["GameFeatures"]?.ToString()),
                 CoverImagePath = gameRow["CoverImagePath"] == DBNull.Value ? string.Empty : gameRow["CoverImagePath"]?.ToString() ?? string.Empty,
                 CoverImageSourcePath = GameAssetManager.GetAbsoluteAssetPath(gameRow["CoverImagePath"] == DBNull.Value ? string.Empty : gameRow["CoverImagePath"]?.ToString() ?? string.Empty),
                 Platforms = GetGamePlatforms(gameId),
@@ -437,9 +448,10 @@ namespace VOID_STORE.Controllers
 
         public int SaveGameDraft(GameDraftSaveRequest request)
         {
-        // yeni surumu onay icin kaydet
+        // guncel surumu onaya gonder
             string validationMessage = ValidateGameInput(
                 request.Title,
+                request.Category,
                 request.PriceText,
                 request.Description,
                 request.Developer,
@@ -490,6 +502,7 @@ namespace VOID_STORE.Controllers
                     using MySqlCommand updateDraftCommand = new MySqlCommand(
                         @"UPDATE GameDrafts
                           SET Title = @Title,
+                              Category = @Category,
                               Description = @Description,
                               Price = @Price,
                               CoverImagePath = @CoverImagePath,
@@ -500,12 +513,14 @@ namespace VOID_STORE.Controllers
                               MinimumRequirements = @MinimumRequirements,
                               RecommendedRequirements = @RecommendedRequirements,
                               SupportedLanguages = @SupportedLanguages,
+                              GameFeatures = @GameFeatures,
                               DraftStatus = 'pending'
                           WHERE GameDraftId = @GameDraftId;",
                         connection,
                         transaction);
 
                     updateDraftCommand.Parameters.AddWithValue("@Title", request.Title.Trim());
+                    updateDraftCommand.Parameters.AddWithValue("@Category", GameCategoryCatalog.Normalize(request.Category));
                     updateDraftCommand.Parameters.AddWithValue("@Description", request.Description.Trim());
                     updateDraftCommand.Parameters.AddWithValue("@Price", price);
                     updateDraftCommand.Parameters.AddWithValue("@CoverImagePath", coverRelativePath);
@@ -518,6 +533,7 @@ namespace VOID_STORE.Controllers
                     updateDraftCommand.Parameters.AddWithValue("@MinimumRequirements", request.MinimumRequirements.Trim());
                     updateDraftCommand.Parameters.AddWithValue("@RecommendedRequirements", request.RecommendedRequirements.Trim());
                     updateDraftCommand.Parameters.AddWithValue("@SupportedLanguages", request.SupportedLanguages.Trim());
+                    updateDraftCommand.Parameters.AddWithValue("@GameFeatures", SerializeFeatures(request.Features));
                     updateDraftCommand.Parameters.AddWithValue("@GameDraftId", gameDraftId);
                     updateDraftCommand.ExecuteNonQuery();
                 }
@@ -525,14 +541,15 @@ namespace VOID_STORE.Controllers
                 {
                     using MySqlCommand insertDraftCommand = new MySqlCommand(
                         @"INSERT INTO GameDrafts
-                            (GameId, Title, Description, Price, CoverImagePath, Developer, Publisher, ReleaseDate, TrailerUrl, MinimumRequirements, RecommendedRequirements, SupportedLanguages, DraftStatus)
+                            (GameId, Title, Category, Description, Price, CoverImagePath, Developer, Publisher, ReleaseDate, TrailerUrl, MinimumRequirements, RecommendedRequirements, SupportedLanguages, GameFeatures, DraftStatus)
                           VALUES
-                            (@GameId, @Title, @Description, @Price, @CoverImagePath, @Developer, @Publisher, @ReleaseDate, @TrailerUrl, @MinimumRequirements, @RecommendedRequirements, @SupportedLanguages, 'pending');",
+                            (@GameId, @Title, @Category, @Description, @Price, @CoverImagePath, @Developer, @Publisher, @ReleaseDate, @TrailerUrl, @MinimumRequirements, @RecommendedRequirements, @SupportedLanguages, @GameFeatures, 'pending');",
                         connection,
                         transaction);
 
                     insertDraftCommand.Parameters.AddWithValue("@GameId", request.GameId);
                     insertDraftCommand.Parameters.AddWithValue("@Title", request.Title.Trim());
+                    insertDraftCommand.Parameters.AddWithValue("@Category", GameCategoryCatalog.Normalize(request.Category));
                     insertDraftCommand.Parameters.AddWithValue("@Description", request.Description.Trim());
                     insertDraftCommand.Parameters.AddWithValue("@Price", price);
                     insertDraftCommand.Parameters.AddWithValue("@CoverImagePath", coverRelativePath);
@@ -545,6 +562,7 @@ namespace VOID_STORE.Controllers
                     insertDraftCommand.Parameters.AddWithValue("@MinimumRequirements", request.MinimumRequirements.Trim());
                     insertDraftCommand.Parameters.AddWithValue("@RecommendedRequirements", request.RecommendedRequirements.Trim());
                     insertDraftCommand.Parameters.AddWithValue("@SupportedLanguages", request.SupportedLanguages.Trim());
+                    insertDraftCommand.Parameters.AddWithValue("@GameFeatures", SerializeFeatures(request.Features));
                     insertDraftCommand.ExecuteNonQuery();
 
                     gameDraftId = Convert.ToInt32(insertDraftCommand.LastInsertedId);
@@ -589,7 +607,7 @@ namespace VOID_STORE.Controllers
 
         public void ApprovePendingNewGame(int gameId)
         {
-        // yeni oyunu yayina ac
+        // yeni oyunu yayina al
             EnsureSchema();
 
             if (!PendingGameExists(gameId))
@@ -604,7 +622,7 @@ namespace VOID_STORE.Controllers
 
         public void RejectPendingNewGame(int gameId)
         {
-        // yeni oyun kaydini tumuyle kaldir
+        // yeni oyun kaydini tumden sil
             EnsureSchema();
 
             if (!PendingGameExists(gameId))
@@ -621,7 +639,7 @@ namespace VOID_STORE.Controllers
 
         public void SetGameListedState(int gameId, bool isListed)
         {
-        // listelenme durumunu degistir
+        // oyunun liste durumunu degistir
             if (!ApprovedGameExists(gameId))
             {
                 throw new InvalidOperationException("Seçilen oyun bulunamadı.");
@@ -635,7 +653,7 @@ namespace VOID_STORE.Controllers
 
         public void DeleteGamePermanently(int gameId)
         {
-        // oyunu bagli kayitlariyla birlikte sil
+        // oyunu bagli kayitlariyla sil
             EnsureSchema();
 
             if (!ApprovedGameExists(gameId))
@@ -705,13 +723,14 @@ namespace VOID_STORE.Controllers
 
         public void ApprovePendingDraft(int gameId)
         {
-        // yeni surumu yayina al
+        // onaylanan surumu canliya aktar
             EnsureSchema();
 
             DataTable draftTable = DatabaseManager.ExecuteQuery(
                 @"SELECT
                     GameDraftId,
                     Title,
+                    Category,
                     Description,
                     Price,
                     CoverImagePath,
@@ -721,7 +740,8 @@ namespace VOID_STORE.Controllers
                     TrailerUrl,
                     MinimumRequirements,
                     RecommendedRequirements,
-                    SupportedLanguages
+                    SupportedLanguages,
+                    GameFeatures
                   FROM GameDrafts
                   WHERE GameId = @GameId
                     AND DraftStatus = 'pending'
@@ -749,6 +769,7 @@ namespace VOID_STORE.Controllers
                 using MySqlCommand updateGameCommand = new MySqlCommand(
                     @"UPDATE Games
                       SET Title = @Title,
+                          Category = @Category,
                           Description = @Description,
                           Price = @Price,
                           CoverImagePath = @CoverImagePath,
@@ -759,6 +780,7 @@ namespace VOID_STORE.Controllers
                           MinimumRequirements = @MinimumRequirements,
                           RecommendedRequirements = @RecommendedRequirements,
                           SupportedLanguages = @SupportedLanguages,
+                          GameFeatures = @GameFeatures,
                           ApprovalStatus = 'approved'
                       WHERE GameId = @GameId
                         AND ApprovalStatus = 'approved';",
@@ -766,6 +788,7 @@ namespace VOID_STORE.Controllers
                     transaction);
 
                 updateGameCommand.Parameters.AddWithValue("@Title", draftRow["Title"]?.ToString() ?? string.Empty);
+                updateGameCommand.Parameters.AddWithValue("@Category", GameCategoryCatalog.Normalize(draftRow["Category"]?.ToString() ?? string.Empty));
                 updateGameCommand.Parameters.AddWithValue("@Description", draftRow["Description"]?.ToString() ?? string.Empty);
                 updateGameCommand.Parameters.AddWithValue("@Price", Convert.ToDecimal(draftRow["Price"], CultureInfo.InvariantCulture));
                 updateGameCommand.Parameters.AddWithValue("@CoverImagePath", string.IsNullOrWhiteSpace(liveCoverPath) ? DBNull.Value : liveCoverPath);
@@ -776,6 +799,7 @@ namespace VOID_STORE.Controllers
                 updateGameCommand.Parameters.AddWithValue("@MinimumRequirements", draftRow["MinimumRequirements"] == DBNull.Value ? DBNull.Value : draftRow["MinimumRequirements"]?.ToString() ?? string.Empty);
                 updateGameCommand.Parameters.AddWithValue("@RecommendedRequirements", draftRow["RecommendedRequirements"] == DBNull.Value ? DBNull.Value : draftRow["RecommendedRequirements"]?.ToString() ?? string.Empty);
                 updateGameCommand.Parameters.AddWithValue("@SupportedLanguages", draftRow["SupportedLanguages"] == DBNull.Value ? DBNull.Value : draftRow["SupportedLanguages"]?.ToString() ?? string.Empty);
+                updateGameCommand.Parameters.AddWithValue("@GameFeatures", draftRow["GameFeatures"] == DBNull.Value ? DBNull.Value : draftRow["GameFeatures"]?.ToString() ?? string.Empty);
                 updateGameCommand.Parameters.AddWithValue("@GameId", gameId);
                 updateGameCommand.ExecuteNonQuery();
 
@@ -817,7 +841,7 @@ namespace VOID_STORE.Controllers
 
         public void RejectPendingDraft(int gameId)
         {
-        // yeni surumu kayitlardan kaldir
+        // bekleyen surumu kayitlardan sil
             EnsureSchema();
 
             int draftId = GetPendingDraftId(gameId);
@@ -836,6 +860,7 @@ namespace VOID_STORE.Controllers
 
         private string ValidateGameInput(
             string title,
+            string category,
             string priceText,
             string description,
             string developer,
@@ -849,10 +874,15 @@ namespace VOID_STORE.Controllers
             string coverImageSourcePath,
             IReadOnlyCollection<string> galleryImageSourcePaths)
         {
-        // zorunlu alanlari ve kurallari denetle
+        // form verisini kurallara gore denetle
             if (string.IsNullOrWhiteSpace(title))
             {
                 return "Oyun adı zorunludur.";
+            }
+
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                return "Kategori seçmeniz zorunludur.";
             }
 
             if (string.IsNullOrWhiteSpace(priceText))
@@ -962,7 +992,7 @@ namespace VOID_STORE.Controllers
 
         private bool ApprovedGameExists(int gameId)
         {
-        // oyunun kayitli olup olmadigini denetle
+        // oyun kaydi var mi bak
             object result = DatabaseManager.ExecuteScalar(
                 "SELECT COUNT(*) FROM Games WHERE GameId = @GameId AND ApprovalStatus = 'approved';",
                 new SqlParameter("@GameId", gameId));
@@ -972,7 +1002,7 @@ namespace VOID_STORE.Controllers
 
         private bool PendingGameExists(int gameId)
         {
-        // onay bekleyen oyun kaydini denetle
+        // onay bekleyen yeni oyun var mi bak
             object result = DatabaseManager.ExecuteScalar(
                 "SELECT COUNT(*) FROM Games WHERE GameId = @GameId AND ApprovalStatus = 'pending';",
                 new SqlParameter("@GameId", gameId));
@@ -982,7 +1012,7 @@ namespace VOID_STORE.Controllers
 
         private bool GameExistsInLibraries(int gameId)
         {
-        // oyunun kutuphanelerde yer alip almadigini denetle
+        // oyun kutuphanede var mi bak
             object result = DatabaseManager.ExecuteScalar(
                 "SELECT COUNT(*) FROM Libraries WHERE GameId = @GameId;",
                 new SqlParameter("@GameId", gameId));
@@ -992,7 +1022,7 @@ namespace VOID_STORE.Controllers
 
         private bool HasPendingDraft(int gameId)
         {
-        // bekleyen guncelleme kaydi var mi denetle
+        // bekleyen guncelleme var mi bak
             return GetPendingDraftId(gameId) > 0;
         }
 
@@ -1012,7 +1042,7 @@ namespace VOID_STORE.Controllers
 
         private IReadOnlyList<AdminGameListItem> GetApprovedVisibilityGames(string searchText, bool isListed)
         {
-        // liste durumuna gore oyunlari sirala
+        // oyun listesini ekrana gore sirala
             EnsureSchema();
 
             string normalizedSearch = searchText?.Trim() ?? string.Empty;
@@ -1068,11 +1098,12 @@ namespace VOID_STORE.Controllers
 
         private GameEditState? TryGetPendingNewGameState(int gameId)
         {
-        // yeni oyun kaydinin ayrintilarini getir
+        // yeni oyun kaydinin detayini oku
             DataTable gameTable = DatabaseManager.ExecuteQuery(
                 @"SELECT
                     GameId,
                     Title,
+                    Category,
                     Description,
                     Price,
                     CoverImagePath,
@@ -1082,7 +1113,8 @@ namespace VOID_STORE.Controllers
                     TrailerUrl,
                     MinimumRequirements,
                     RecommendedRequirements,
-                    SupportedLanguages
+                    SupportedLanguages,
+                    GameFeatures
                   FROM Games
                   WHERE GameId = @GameId
                     AND ApprovalStatus = 'pending'
@@ -1105,11 +1137,12 @@ namespace VOID_STORE.Controllers
 
         private GameEditState? TryGetApprovedGameState(int gameId)
         {
-        // yayindaki oyunun ayrintilarini getir
+        // yayindaki oyunun detayini oku
             DataTable gameTable = DatabaseManager.ExecuteQuery(
                 @"SELECT
                     GameId,
                     Title,
+                    Category,
                     Description,
                     Price,
                     CoverImagePath,
@@ -1119,7 +1152,8 @@ namespace VOID_STORE.Controllers
                     TrailerUrl,
                     MinimumRequirements,
                     RecommendedRequirements,
-                    SupportedLanguages
+                    SupportedLanguages,
+                    GameFeatures
                   FROM Games
                   WHERE GameId = @GameId
                     AND ApprovalStatus = 'approved'
@@ -1142,12 +1176,13 @@ namespace VOID_STORE.Controllers
 
         private GameEditState? TryGetPendingDraftState(int gameId)
         {
-        // yeni surumun ayrintilarini getir
+        // bekleyen surumun detayini oku
             DataTable draftTable = DatabaseManager.ExecuteQuery(
                 @"SELECT
                     GameDraftId,
                     GameId,
                     Title,
+                    Category,
                     Description,
                     Price,
                     CoverImagePath,
@@ -1157,7 +1192,8 @@ namespace VOID_STORE.Controllers
                     TrailerUrl,
                     MinimumRequirements,
                     RecommendedRequirements,
-                    SupportedLanguages
+                    SupportedLanguages,
+                    GameFeatures
                   FROM GameDrafts
                   WHERE GameId = @GameId
                     AND DraftStatus = 'pending'
@@ -1181,7 +1217,7 @@ namespace VOID_STORE.Controllers
 
         private List<string> GetGamePlatforms(int gameId)
         {
-        // yayindaki platform listesini getir
+        // yayindaki platformlari getir
             return GetPlatforms(
                 "SELECT PlatformName FROM GamePlatforms WHERE GameId = @Id ORDER BY PlatformName ASC;",
                 new SqlParameter("@Id", gameId));
@@ -1189,7 +1225,7 @@ namespace VOID_STORE.Controllers
 
         private List<string> GetDraftPlatforms(int gameDraftId)
         {
-        // yeni surum platform listesini getir
+        // bekleyen surum platformlarini getir
             return GetPlatforms(
                 "SELECT PlatformName FROM GameDraftPlatforms WHERE GameDraftId = @Id ORDER BY PlatformName ASC;",
                 new SqlParameter("@Id", gameDraftId));
@@ -1197,7 +1233,7 @@ namespace VOID_STORE.Controllers
 
         private List<string> GetPlatforms(string query, SqlParameter parameter)
         {
-        // platform adlarini sirali halde topla
+        // platform adlarini sirali topla
             DataTable platformTable = DatabaseManager.ExecuteQuery(query, parameter);
             return platformTable.Rows
                 .Cast<DataRow>()
@@ -1224,7 +1260,7 @@ namespace VOID_STORE.Controllers
 
         private void ReplaceDraftPlatforms(MySqlConnection connection, MySqlTransaction transaction, int gameDraftId, IReadOnlyCollection<string> platforms)
         {
-        // yeni surum platform kayitlarini yenile
+        // bekleyen surum platformlarini yenile
             using MySqlCommand clearPlatformsCommand = new MySqlCommand(
                 "DELETE FROM GameDraftPlatforms WHERE GameDraftId = @GameDraftId;",
                 connection,
@@ -1248,7 +1284,7 @@ namespace VOID_STORE.Controllers
 
         private GameEditState CreateGameState(DataRow row, IReadOnlyCollection<string> platforms, IReadOnlyCollection<string> galleryPaths, bool hasPendingDraft)
         {
-        // satirdan liste karti verisini kur
+        // liste karti verisini hazirla
             string coverPath = row["CoverImagePath"] == DBNull.Value
                 ? string.Empty
                 : row["CoverImagePath"]?.ToString() ?? string.Empty;
@@ -1257,6 +1293,7 @@ namespace VOID_STORE.Controllers
             {
                 GameId = Convert.ToInt32(row["GameId"]),
                 Title = row["Title"]?.ToString() ?? string.Empty,
+                Category = GameCategoryCatalog.Normalize(row["Category"] == DBNull.Value ? string.Empty : row["Category"]?.ToString()),
                 Description = row["Description"]?.ToString() ?? string.Empty,
                 PriceText = FormatPriceText(row["Price"]),
                 Developer = row["Developer"] == DBNull.Value ? string.Empty : row["Developer"]?.ToString() ?? string.Empty,
@@ -1266,6 +1303,7 @@ namespace VOID_STORE.Controllers
                 MinimumRequirements = row["MinimumRequirements"] == DBNull.Value ? string.Empty : row["MinimumRequirements"]?.ToString() ?? string.Empty,
                 RecommendedRequirements = row["RecommendedRequirements"] == DBNull.Value ? string.Empty : row["RecommendedRequirements"]?.ToString() ?? string.Empty,
                 SupportedLanguages = row["SupportedLanguages"] == DBNull.Value ? string.Empty : row["SupportedLanguages"]?.ToString() ?? string.Empty,
+                Features = ParseFeatures(row["GameFeatures"] == DBNull.Value ? string.Empty : row["GameFeatures"]?.ToString()),
                 CoverImagePath = coverPath,
                 CoverImageSourcePath = GameAssetManager.GetAbsoluteAssetPath(coverPath),
                 Platforms = platforms.ToList(),
@@ -1274,9 +1312,27 @@ namespace VOID_STORE.Controllers
             };
         }
 
+        private string SerializeFeatures(IEnumerable<string>? features)
+        {
+        // secilen ozellikleri metne cevir
+            return string.Join("|", GameFeatureCatalog.NormalizeMany(features));
+        }
+
+        private List<string> ParseFeatures(string? storedValue)
+        {
+        // kayitli ozellikleri listeye cevir
+            if (string.IsNullOrWhiteSpace(storedValue))
+            {
+                return new List<string>();
+            }
+
+            return GameFeatureCatalog.NormalizeMany(
+                storedValue.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+
         private decimal ParsePrice(string priceText)
         {
-        // fiyat metnini sayiya donustur
+        // fiyat metnini sayiya cevir
             string normalized = priceText.Trim().Replace(" ", string.Empty);
 
             if (!PriceValidationRegex.IsMatch(normalized))
@@ -1299,7 +1355,7 @@ namespace VOID_STORE.Controllers
 
         private string FormatPriceText(object value)
         {
-        // fiyat bilgisini gosterime hazirla
+        // fiyati ekranda gosterilecek hale getir
             if (value == null || value == DBNull.Value)
             {
                 return string.Empty;
@@ -1313,7 +1369,7 @@ namespace VOID_STORE.Controllers
 
         private string FormatReleaseDate(object value)
         {
-        // tarihi ekranda gosterilecek bicime cevir
+        // tarihi ekrana uygun bicime cevir
             if (value == null || value == DBNull.Value)
             {
                 return string.Empty;
@@ -1325,7 +1381,7 @@ namespace VOID_STORE.Controllers
 
         private void TryDeleteLiveAssets(int gameId)
         {
-        // yayindaki gorselleri temizlemeyi dene
+        // canli gorselleri temizlemeyi dene
             try
             {
                 GameAssetManager.DeleteGameFolder(gameId);
@@ -1337,7 +1393,7 @@ namespace VOID_STORE.Controllers
 
         private void TryDeleteDraftAssets(int gameId)
         {
-        // yeni surum gorsellerini temizlemeyi dene
+        // bekleyen gorselleri temizlemeyi dene
             try
             {
                 GameAssetManager.DeleteDraftFolder(gameId);

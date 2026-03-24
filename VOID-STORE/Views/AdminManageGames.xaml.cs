@@ -46,7 +46,7 @@ namespace VOID_STORE.Views
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-        // baslik alanindan pencereyi surukle
+        // basliktan pencereyi tasi
             if (e.ClickCount == 2)
             {
                 ToggleWindowState();
@@ -67,19 +67,19 @@ namespace VOID_STORE.Views
 
         private void ToggleWindowStateButton_Click(object sender, RoutedEventArgs e)
         {
-            // pencere durumunu degistir
+        // pencere boyutunu degistir
             ToggleWindowState();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            // pencereyi kapat
+        // pencereyi kapat
             Close();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            // yonetim paneline geri don
+        // yonetim paneline geri don
             Close();
         }
 
@@ -103,13 +103,13 @@ namespace VOID_STORE.Views
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-        // oyun listesini arama metnine gore daralt
+        // listeyi arama metnine gore daralt
             LoadItems(_selectedItem?.GameId ?? 0);
         }
 
         private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-        // secilen kaydin detaylarini yukle
+        // secilen kaydin detayini yukle
             if (lstGames.SelectedItem is not AdminGameListItem selectedItem)
             {
                 _selectedItem = null;
@@ -145,13 +145,13 @@ namespace VOID_STORE.Views
                 }
                 else if (_currentSection == ManageSection.Listed)
                 {
-                    if (!CustomConfirm.ShowDialog("LİSTE DIŞI", "Seçili oyunu mağaza listesinden kaldırmak istiyor musunuz?", "Liste Dışı Al", this))
+                    if (!CustomConfirm.ShowDialog("LİSTE DIŞI", "Seçili oyunu mağaza listesinden kaldırmak istiyor musunuz?", "Liste Dışına Al", this))
                     {
                         return;
                     }
 
                     _adminGameController.SetGameListedState(_selectedItem.GameId, false);
-                    CustomError.ShowDialog("Oyun liste dışı alındı.", "BAŞARILI", true);
+                    CustomError.ShowDialog("Oyun liste dışına alındı.", "BAŞARILI", true);
                 }
                 else
                 {
@@ -228,7 +228,7 @@ namespace VOID_STORE.Views
 
         private void ApplySection(ManageSection section)
         {
-            // secili bolumu degistir
+        // secili bolumu degistir
             _currentSection = section;
             _selectedItem = null;
             txtSearch.Text = string.Empty;
@@ -265,7 +265,7 @@ namespace VOID_STORE.Views
 
         private void ApplyTabButtonStyles()
         {
-            // sekme gorunumlerini yenile
+        // sekme gorunumlerini yenile
             ApplyTabButtonStyle(btnPendingTab, _currentSection == ManageSection.Pending);
             ApplyTabButtonStyle(btnListedTab, _currentSection == ManageSection.Listed);
             ApplyTabButtonStyle(btnUnlistedTab, _currentSection == ManageSection.Unlisted);
@@ -273,7 +273,7 @@ namespace VOID_STORE.Views
 
         private void ApplyTabButtonStyle(Button button, bool isActive)
         {
-            // secili sekme gorunumunu uygula
+        // secili sekme gorunumunu uygula
             button.Background = CreateBrush(isActive ? "#FFFFFF" : "#111114");
             button.BorderBrush = CreateBrush(isActive ? "#FFFFFF" : "#1C1C22");
             button.Foreground = CreateBrush(isActive ? "#09090B" : "#FFFFFF");
@@ -281,7 +281,7 @@ namespace VOID_STORE.Views
 
         private void LoadItems(int preserveGameId = 0)
         {
-            // secili bolumun listesini doldur
+        // secili bolumun listesini doldur
             _items = _currentSection switch
             {
                 ManageSection.Pending => _adminGameController.GetPendingReviewGames(txtSearch.Text.Trim()).ToList(),
@@ -347,7 +347,7 @@ namespace VOID_STORE.Views
 
         private void ApplyDetail(GameManageDetail detail)
         {
-            // sag alandaki detaylari doldur
+        // sag alandaki detaylari doldur
             DetailPlaceholder.Visibility = Visibility.Collapsed;
             DetailScroll.Visibility = Visibility.Visible;
 
@@ -397,7 +397,7 @@ namespace VOID_STORE.Views
             {
                 txtDetailTitle.Text = "Listelenmiş Oyun";
                 txtDetailHint.Text = "Bu oyun şu anda mağazada görünür durumda.";
-                btnPrimaryAction.Content = "Liste Dışı Al";
+                btnPrimaryAction.Content = "Liste Dışına Al";
                 btnSecondaryAction.Content = "Kalıcı Sil";
                 btnPrimaryAction.Visibility = Visibility.Visible;
                 btnSecondaryAction.Visibility = Visibility.Visible;
@@ -423,7 +423,7 @@ namespace VOID_STORE.Views
 
         private void FillStateCard(GameEditState state, Image image, TextBlock summary, TextBlock description, WrapPanel platformsPanel, ListBox galleryList)
         {
-            // secilen surum kartini doldur
+        // secilen surum kartini doldur
             image.Source = GameAssetManager.LoadBitmap(state.CoverImageSourcePath);
             summary.Text = BuildSummary(state);
             description.Text = string.IsNullOrWhiteSpace(state.Description) ? "Açıklama girilmemiş." : state.Description;
@@ -433,7 +433,8 @@ namespace VOID_STORE.Views
 
         private string BuildSummary(GameEditState state)
         {
-        // kisa oyun bilgisi metnini kur
+        // kisa oyun bilgisi metnini hazirla
+            string categoryText = string.IsNullOrWhiteSpace(state.Category) ? "-" : state.Category;
             string priceText = string.IsNullOrWhiteSpace(state.PriceText) ? "-" : $"{state.PriceText} ₺";
             string developerText = string.IsNullOrWhiteSpace(state.Developer) ? "-" : state.Developer;
             string publisherText = string.IsNullOrWhiteSpace(state.Publisher) ? "-" : state.Publisher;
@@ -442,13 +443,14 @@ namespace VOID_STORE.Views
             string minimumText = string.IsNullOrWhiteSpace(state.MinimumRequirements) ? "Belirtilmedi" : state.MinimumRequirements.Trim();
             string recommendedText = string.IsNullOrWhiteSpace(state.RecommendedRequirements) ? "Belirtilmedi" : state.RecommendedRequirements.Trim();
             string languagesText = string.IsNullOrWhiteSpace(state.SupportedLanguages) ? "Belirtilmedi" : state.SupportedLanguages.Trim();
+            string featuresText = state.Features.Count == 0 ? "Belirtilmedi" : string.Join(", ", state.Features);
 
-            return $"Genel Bilgiler\nOyun Adı  {state.Title}\nYapımcı  {developerText}\nYayıncı  {publisherText}\nFiyat  {priceText}\nÇıkış Tarihi  {releaseText}\nFragman  {trailerText}\n\nMinimum Sistem Gereksinimleri\n{minimumText}\n\nÖnerilen Sistem Gereksinimleri\n{recommendedText}\n\nDesteklenen Diller\n{languagesText}";
+            return $"Genel Bilgiler\nOyun Adı  {state.Title}\nKategori  {categoryText}\nYapımcı  {developerText}\nYayıncı  {publisherText}\nFiyat  {priceText}\nÇıkış Tarihi  {releaseText}\nFragman  {trailerText}\n\nOyun Özellikleri\n{featuresText}\n\nMinimum Sistem Gereksinimleri\n{minimumText}\n\nÖnerilen Sistem Gereksinimleri\n{recommendedText}\n\nDesteklenen Diller\n{languagesText}";
         }
 
         private void SetPlatformBadges(WrapPanel panel, IEnumerable<string> platforms)
         {
-            // platform etiketlerini yeniden kur
+        // platform etiketlerini yeniden kur
             panel.Children.Clear();
 
             foreach (string platform in platforms)
@@ -500,7 +502,7 @@ namespace VOID_STORE.Views
 
         private void ToggleWindowState()
         {
-            // pencere boyutunu buyut ya da geri al
+        // pencere boyutunu degistir
             WindowState = WindowState == WindowState.Maximized
                 ? WindowState.Normal
                 : WindowState.Maximized;

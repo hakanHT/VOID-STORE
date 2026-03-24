@@ -4,11 +4,12 @@ namespace VOID_STORE.Models
 {
     public class GameDraftSaveRequest
     {
-    // oyunun kimlik bilgisi
+        // duzenlenen oyunun kimligi
         public int GameId { get; set; }
 
-    // guncellenen temel alanlar
+        // guncellenen alanlar
         public string Title { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
 
         public string PriceText { get; set; } = string.Empty;
 
@@ -28,11 +29,12 @@ namespace VOID_STORE.Models
 
         public string SupportedLanguages { get; set; } = string.Empty;
 
-    // guncellenen medya dosyalari
+        // secilen kapak dosyasi
         public string CoverImageSourcePath { get; set; } = string.Empty;
 
-    // guncellenen platformlar ve galeri dosyalari
+        // secilen platform ve galeri listesi
         public List<string> Platforms { get; set; } = new();
+        public List<string> Features { get; set; } = new();
 
         public List<string> GalleryImageSourcePaths { get; set; } = new();
     }

@@ -17,10 +17,16 @@ namespace VOID_STORE.Views
         public static bool ShowDialog(string title, string message, string confirmText = "Onayla", Window? owner = null)
         {
             CustomConfirm confirmWindow = new CustomConfirm(title, message, confirmText);
+            Window? dialogOwner = owner ?? GetActiveWindow();
 
-            if (owner != null)
+            if (dialogOwner != null)
             {
-                confirmWindow.Owner = owner;
+                confirmWindow.Owner = dialogOwner;
+                confirmWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            }
+            else
+            {
+                confirmWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
 
             return confirmWindow.ShowDialog() == true;
@@ -44,6 +50,24 @@ namespace VOID_STORE.Views
         {
             DialogResult = false;
             Close();
+        }
+
+        private static Window? GetActiveWindow()
+        {
+            if (Application.Current == null)
+            {
+                return null;
+            }
+
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window.IsActive)
+                {
+                    return window;
+                }
+            }
+
+            return Application.Current.MainWindow;
         }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -23,7 +23,7 @@ namespace VOID_STORE.Views
 
         public AdminEditGame()
         {
-        // acilis verilerini hazirla
+        // acilis verilerini yukle
             InitializeComponent();
             _adminGameController = new AdminGameController();
 
@@ -42,6 +42,8 @@ namespace VOID_STORE.Views
 
             DataObject.AddPastingHandler(txtPrice, PriceTextBox_OnPaste);
             DataObject.AddPastingHandler(txtReleaseDate, ReleaseDateTextBox_OnPaste);
+            lstCategory.ItemsSource = GameCategoryCatalog.All;
+            lstFeatures.ItemsSource = GameFeatureCatalog.All;
 
             LoadGames();
             ShowEditor(false);
@@ -49,7 +51,7 @@ namespace VOID_STORE.Views
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-        // baslik alanindan pencereyi surukle
+        // basliktan pencereyi tasi
             if (e.ClickCount == 2)
             {
                 ToggleWindowState();
@@ -70,31 +72,31 @@ namespace VOID_STORE.Views
 
         private void ToggleWindowStateButton_Click(object sender, RoutedEventArgs e)
         {
-            // pencere boyutunu degistir
+        // pencere boyutunu degistir
             ToggleWindowState();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            // pencereyi kapat
+        // pencereyi kapat
             Close();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            // yonetim paneline geri don
+        // yonetim paneline geri don
             Close();
         }
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-        // oyun listesini arama metnine gore daralt
+        // listeyi arama metnine gore daralt
             LoadGames(_selectedGameId);
         }
 
         private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // secilen oyunun bilgilerini yukle
+        // secilen oyunun verisini yukle
             if (lstGames.SelectedItem is not AdminGameListItem selectedItem)
             {
                 ShowEditor(false);
@@ -118,7 +120,7 @@ namespace VOID_STORE.Views
 
         private void SelectCoverButton_Click(object sender, RoutedEventArgs e)
         {
-            // yeni kapak gorselini sec
+        // yeni kapak gorselini sec
             if (_selectedGameId == 0)
             {
                 return;
@@ -145,7 +147,7 @@ namespace VOID_STORE.Views
 
         private void SelectGalleryButton_Click(object sender, RoutedEventArgs e)
         {
-            // galeriye yeni gorsel ekle
+        // galeriye yeni gorsel ekle
             if (_selectedGameId == 0)
             {
                 return;
@@ -189,7 +191,7 @@ namespace VOID_STORE.Views
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-        // secili oyunun kayitli verisini geri yukle
+        // secili oyunun verisini yeniden yukle
             if (_selectedGameId == 0)
             {
                 return;
@@ -210,7 +212,7 @@ namespace VOID_STORE.Views
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-        // yeni surumu onay icin kaydet
+        // yeni surumu onaya gonder
             if (_selectedGameId == 0)
             {
                 return;
@@ -248,14 +250,14 @@ namespace VOID_STORE.Views
 
         private void PriceTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // fiyat girisini kurala gore sinirla
+        // fiyat girisini sinirla
             string nextValue = GetNextText(txtPrice.Text, e.Text, txtPrice.SelectionStart, txtPrice.SelectionLength);
             e.Handled = !PriceInputRegex.IsMatch(nextValue);
         }
 
         private void PriceTextBox_OnPaste(object sender, DataObjectPastingEventArgs e)
         {
-            // yapistirilan fiyat metnini denetle
+        // yapistirilan fiyat metnini denetle
             if (!e.DataObject.GetDataPresent(typeof(string)))
             {
                 e.CancelCommand();
@@ -273,7 +275,7 @@ namespace VOID_STORE.Views
 
         private void PriceTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
-        // fiyat yazimini toparla
+        // fiyat yazimini duzenle
             if (string.IsNullOrWhiteSpace(txtPrice.Text))
             {
                 return;
@@ -297,14 +299,14 @@ namespace VOID_STORE.Views
 
         private void ReleaseDateTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // tarih girisini kurala gore sinirla
+        // tarih girisini sinirla
             string nextValue = GetNextText(txtReleaseDate.Text, e.Text, txtReleaseDate.SelectionStart, txtReleaseDate.SelectionLength);
             e.Handled = !Regex.IsMatch(nextValue, @"^\d{0,2}(\.\d{0,2}(\.\d{0,4})?)?$");
         }
 
         private void ReleaseDateTextBox_OnPaste(object sender, DataObjectPastingEventArgs e)
         {
-            // yapistirilan tarihi denetle
+        // yapistirilan tarihi denetle
             if (!e.DataObject.GetDataPresent(typeof(string)))
             {
                 e.CancelCommand();
@@ -321,7 +323,7 @@ namespace VOID_STORE.Views
 
         private void ToggleWindowState()
         {
-            // pencere boyutunu buyut ya da geri al
+        // pencere boyutunu degistir
             WindowState = WindowState == WindowState.Maximized
                 ? WindowState.Normal
                 : WindowState.Maximized;
@@ -329,7 +331,7 @@ namespace VOID_STORE.Views
 
         private void LoadGames(int preserveGameId = 0)
         {
-        // listelenen oyunlari yukle
+        // yayindaki oyunlari yukle
             _games = _adminGameController
                 .GetApprovedGames(txtSearch.Text.Trim())
                 .ToList();
@@ -360,8 +362,9 @@ namespace VOID_STORE.Views
 
         private void ApplyState(GameEditState state)
         {
-            // secilen oyunun alanlarini doldur
+        // secilen oyunun alanlarini doldur
             txtTitle.Text = state.Title;
+            lstCategory.SelectedItem = GameCategoryCatalog.Normalize(state.Category);
             txtPrice.Text = state.PriceText;
             txtDescription.Text = state.Description;
             txtDeveloper.Text = state.Developer;
@@ -371,17 +374,30 @@ namespace VOID_STORE.Views
             txtMinimumRequirements.Text = state.MinimumRequirements;
             txtRecommendedRequirements.Text = state.RecommendedRequirements;
             txtSupportedLanguages.Text = state.SupportedLanguages;
+            lstFeatures.UnselectAll();
 
             tglWindows.IsChecked = state.Platforms.Any(platform => platform.Equals("Windows", StringComparison.OrdinalIgnoreCase));
             tglMacOs.IsChecked = state.Platforms.Any(platform => platform.Equals("macOS", StringComparison.OrdinalIgnoreCase));
             tglLinux.IsChecked = state.Platforms.Any(platform => platform.Equals("Linux", StringComparison.OrdinalIgnoreCase));
 
+            foreach (string feature in state.Features)
+            {
+                lstFeatures.SelectedItems.Add(feature);
+            }
+
             _selectedCoverPath = state.CoverImageSourcePath;
             _selectedGalleryPaths = state.GalleryImageSourcePaths.ToList();
 
-            txtDraftStatus.Text = state.HasPendingDraft
-                ? "Gönderilen değişiklikler açık"
-                : "Yayındaki sürüm açık";
+            if (state.HasPendingDraft)
+            {
+                txtDraftStatus.Text = "Kaydedilen değişiklikler";
+                txtDraftHint.Text = "Bu alandaki bilgiler onay bekleyen son değişiklikleri gösterir.";
+            }
+            else
+            {
+                txtDraftStatus.Text = "Yayındaki sürüm";
+                txtDraftHint.Text = "Bu alanda şu anda mağazada görünen bilgiler yer alır.";
+            }
 
             UpdateCoverPreview();
             UpdateGalleryState();
@@ -389,7 +405,7 @@ namespace VOID_STORE.Views
 
         private void UpdateCoverPreview()
         {
-            // kapak onizlemesini guncelle
+        // kapak onizlemesini yenile
             txtCoverStatus.Text = string.IsNullOrWhiteSpace(_selectedCoverPath)
                 ? "Henüz seçilmedi"
                 : System.IO.Path.GetFileName(_selectedCoverPath);
@@ -411,7 +427,7 @@ namespace VOID_STORE.Views
 
         private void UpdateGalleryState()
         {
-        // galeri listesini guncelle
+        // galeri listesini yenile
             txtGalleryStatus.Text = $"{_selectedGalleryPaths.Count} / {AdminGameController.MaxGalleryImageCount} görsel seçildi";
             lstGalleryFiles.ItemsSource = null;
             lstGalleryFiles.ItemsSource = _selectedGalleryPaths
@@ -428,11 +444,12 @@ namespace VOID_STORE.Views
 
         private GameDraftSaveRequest BuildRequest()
         {
-        // formdaki verileri tek istekte topla
+        // form verisini tek istekte topla
             return new GameDraftSaveRequest
             {
                 GameId = _selectedGameId,
                 Title = txtTitle.Text.Trim(),
+                Category = GameCategoryCatalog.Normalize(lstCategory.SelectedItem?.ToString()),
                 PriceText = txtPrice.Text.Trim(),
                 Description = txtDescription.Text.Trim(),
                 Developer = txtDeveloper.Text.Trim(),
@@ -444,6 +461,7 @@ namespace VOID_STORE.Views
                 SupportedLanguages = txtSupportedLanguages.Text.Trim(),
                 CoverImageSourcePath = _selectedCoverPath,
                 Platforms = GetSelectedPlatforms(),
+                Features = GetSelectedFeatures(),
                 GalleryImageSourcePaths = _selectedGalleryPaths.ToList()
             };
         }
@@ -471,9 +489,17 @@ namespace VOID_STORE.Views
             return platforms;
         }
 
+        private List<string> GetSelectedFeatures()
+        {
+        // secilen ozellikleri topla
+            return lstFeatures.SelectedItems
+                .Cast<string>()
+                .ToList();
+        }
+
         private OpenFileDialog CreateImageDialog(bool allowMultiple)
         {
-            // gorsel secim penceresini hazirla
+        // gorsel secim penceresini hazirla
             return new OpenFileDialog
             {
                 Filter = "Görsel Dosyaları|*.png;*.jpg;*.jpeg;*.webp;*.bmp",
@@ -484,10 +510,11 @@ namespace VOID_STORE.Views
 
         private static string GetNextText(string currentText, string incomingText, int selectionStart, int selectionLength)
         {
-        // girilecek yeni metni hazirla
+        // yeni metni hesapla
             string prefix = currentText[..selectionStart];
             string suffix = currentText[(selectionStart + selectionLength)..];
             return prefix + incomingText + suffix;
         }
     }
 }
+
