@@ -5,15 +5,24 @@ namespace VOID_STORE.Models
 {
     public static class UserCommerceSchemaManager
     {
+        public static void EnsureUserSessionSchema()
+        {
+            // login icin gereken temel alanlari hazirla
+            EnsureBalanceColumn();
+            EnsureProfileColumns();
+        }
+
         public static void EnsureSchema()
         {
             // kullanici ticaret alanlarini sira ile hazirla
-            EnsureBalanceColumn();
+            EnsureUserSessionSchema();
             EnsureWalletTransactionsTable();
             EnsureCartItemsTable();
             EnsureUserLibraryTable();
             EnsureUserLibraryColumns();
             EnsureUserDownloadsTable();
+            EnsureWishlistItemsTable();
+            EnsureProfileShowcaseTable();
         }
 
         private static void EnsureBalanceColumn()
@@ -24,6 +33,28 @@ namespace VOID_STORE.Models
                 // eski kayitlar icin varsayilan sifir ver
                 DatabaseManager.ExecuteNonQuery(
                     "ALTER TABLE Users ADD COLUMN Balance DECIMAL(18,2) NOT NULL DEFAULT 0.00 AFTER IsAdmin");
+            }
+        }
+
+        private static void EnsureProfileColumns()
+        {
+            // profil medyasi ve bio alanlarini kontrol et
+            if (!ColumnExists("Users", "ProfileImagePath"))
+            {
+                DatabaseManager.ExecuteNonQuery(
+                    "ALTER TABLE Users ADD COLUMN ProfileImagePath VARCHAR(500) NULL AFTER Balance");
+            }
+
+            if (!ColumnExists("Users", "BannerImagePath"))
+            {
+                DatabaseManager.ExecuteNonQuery(
+                    "ALTER TABLE Users ADD COLUMN BannerImagePath VARCHAR(500) NULL AFTER ProfileImagePath");
+            }
+
+            if (!ColumnExists("Users", "Bio"))
+            {
+                DatabaseManager.ExecuteNonQuery(
+                    "ALTER TABLE Users ADD COLUMN Bio TEXT NULL AFTER BannerImagePath");
             }
         }
 
@@ -131,6 +162,48 @@ namespace VOID_STORE.Models
                         FOREIGN KEY (UserId) REFERENCES Users(UserId)
                         ON DELETE CASCADE,
                     CONSTRAINT FK_UserDownloads_Games
+                        FOREIGN KEY (GameId) REFERENCES Games(GameId)
+                        ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
+        }
+
+        private static void EnsureWishlistItemsTable()
+        {
+            // istek listesini kullaniciya gore tut
+            DatabaseManager.ExecuteNonQuery(
+                @"CREATE TABLE IF NOT EXISTS WishlistItems (
+                    WishlistItemId INT NOT NULL AUTO_INCREMENT,
+                    UserId INT NOT NULL,
+                    GameId INT NOT NULL,
+                    CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (WishlistItemId),
+                    UNIQUE KEY UX_WishlistItems_UserGame (UserId, GameId),
+                    KEY IX_WishlistItems_UserId (UserId),
+                    CONSTRAINT FK_WishlistItems_Users
+                        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+                        ON DELETE CASCADE,
+                    CONSTRAINT FK_WishlistItems_Games
+                        FOREIGN KEY (GameId) REFERENCES Games(GameId)
+                        ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
+        }
+
+        private static void EnsureProfileShowcaseTable()
+        {
+            // profil vitrini slot bazli calissin
+            DatabaseManager.ExecuteNonQuery(
+                @"CREATE TABLE IF NOT EXISTS ProfileShowcaseGames (
+                    ShowcaseId INT NOT NULL AUTO_INCREMENT,
+                    UserId INT NOT NULL,
+                    SlotIndex INT NOT NULL,
+                    GameId INT NOT NULL,
+                    PRIMARY KEY (ShowcaseId),
+                    UNIQUE KEY UX_ProfileShowcase_UserSlot (UserId, SlotIndex),
+                    KEY IX_ProfileShowcase_UserId (UserId),
+                    CONSTRAINT FK_ProfileShowcase_Users
+                        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+                        ON DELETE CASCADE,
+                    CONSTRAINT FK_ProfileShowcase_Games
                         FOREIGN KEY (GameId) REFERENCES Games(GameId)
                         ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");

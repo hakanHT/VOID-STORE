@@ -25,8 +25,7 @@ namespace VOID_STORE.Controllers
 
         public DownloadController()
         {
-            // indirme alanlarini her acilista hazir tut
-            UserCommerceSchemaManager.EnsureSchema();
+            // controller acilisini hafif tut
         }
 
         public IReadOnlyDictionary<int, DownloadStateItem> GetDownloadStates(int userId)
@@ -129,7 +128,7 @@ namespace VOID_STORE.Controllers
             // kurulum sadece oturumla ilerler
             if (userId <= 0)
             {
-                throw new InvalidOperationException("Kurulum için giriş yapmanız gerekiyor");
+                throw new InvalidOperationException("Kurulum için giriş yapmanız gerekiyor!");
             }
 
             using SqlConnection connection = DatabaseManager.GetConnection();
@@ -207,7 +206,7 @@ namespace VOID_STORE.Controllers
             // duran indirmeyi uygun slota geri al
             if (userId <= 0)
             {
-                throw new InvalidOperationException("İndirme için giriş yapmanız gerekiyor");
+                throw new InvalidOperationException("İndirme için giriş yapmanız gerekiyor!");
             }
 
             using SqlConnection connection = DatabaseManager.GetConnection();
@@ -597,7 +596,7 @@ namespace VOID_STORE.Controllers
 
             if (result == null || Convert.ToInt32(result, CultureInfo.InvariantCulture) <= 0)
             {
-                throw new InvalidOperationException("Kurulum için önce oyunu satın almalısınız");
+                throw new InvalidOperationException("Kurulum için önce oyunu satın almalısınız!");
             }
         }
 

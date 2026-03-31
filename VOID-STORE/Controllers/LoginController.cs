@@ -7,7 +7,12 @@ namespace VOID_STORE.Controllers
 {
     public class LoginController
     {
-        // girilen bilgilerin veritabanında eşleşip eşleşmediğini kontrol et
+        public LoginController()
+        {
+            // controller acilisini hafif tut
+        }
+
+        // girilen bilgilerin veritabaninda eslesip eslesmedigini kontrol et
         public bool ValidateUser(string usernameOrEmail, string password, out bool isEmailVerified, out bool isAdmin)
         {
             isEmailVerified = false;
@@ -15,10 +20,13 @@ namespace VOID_STORE.Controllers
 
             try
             {
-                // şifreyi doğrulama için hashle
+                // oturum kolonlarini sorgudan once hazirla
+                UserCommerceSchemaManager.EnsureUserSessionSchema();
+
+                // sifreyi dogrulama icin hashle
                 string hashedPassword = SecurityManager.HashPassword(password);
 
-                // kullanıcı profilini veritabanından çek
+                // kullanici profilini veritabanindan cek
                 string loginQuery = "SELECT UserId, IsAdmin, IsEmailVerified FROM Users WHERE (Username = @User OR Email = @User) AND PasswordHash = @Password";
                 SqlParameter[] loginParams =
                 {
@@ -45,7 +53,10 @@ namespace VOID_STORE.Controllers
 
         public string GetDisplayUsername(string usernameOrEmail)
         {
-            // oturumda gösterilecek kullanıcı adını getir
+            // oturum kolonlarini sorgudan once hazirla
+            UserCommerceSchemaManager.EnsureUserSessionSchema();
+
+            // oturumda gosterilecek kullanici adini getir
             object? result = DatabaseManager.ExecuteScalar(
                 @"SELECT Username
                   FROM Users
@@ -58,9 +69,18 @@ namespace VOID_STORE.Controllers
 
         public AuthenticatedUserInfo GetAuthenticatedUser(string usernameOrEmail)
         {
-            // oturum için gereken alanları getir
+            // oturum kolonlarini sorgudan once hazirla
+            UserCommerceSchemaManager.EnsureUserSessionSchema();
+
+            // oturum icin gereken alanlari getir
             DataTable table = DatabaseManager.ExecuteQuery(
-                @"SELECT UserId, Username, Balance
+                @"SELECT
+                    UserId,
+                    Username,
+                    Balance,
+                    COALESCE(ProfileImagePath, '') AS ProfileImagePath,
+                    COALESCE(BannerImagePath, '') AS BannerImagePath,
+                    COALESCE(Bio, '') AS Bio
                   FROM Users
                   WHERE Username = @User OR Email = @User
                   LIMIT 1;",
@@ -77,9 +97,10 @@ namespace VOID_STORE.Controllers
             {
                 UserId = Convert.ToInt32(row["UserId"]),
                 Username = row["Username"]?.ToString() ?? "Oyuncu",
-                Balance = row["Balance"] == DBNull.Value
-                    ? 0
-                    : Convert.ToDecimal(row["Balance"])
+                Balance = row["Balance"] == DBNull.Value ? 0 : Convert.ToDecimal(row["Balance"]),
+                ProfileImagePath = row["ProfileImagePath"]?.ToString() ?? string.Empty,
+                BannerImagePath = row["BannerImagePath"]?.ToString() ?? string.Empty,
+                Bio = row["Bio"]?.ToString() ?? string.Empty
             };
         }
     }

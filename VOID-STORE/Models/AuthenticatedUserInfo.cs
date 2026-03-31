@@ -9,5 +9,9 @@ namespace VOID_STORE.Models
         public decimal Balance { get; set; }
 
         public string ProfileImagePath { get; set; } = string.Empty;
+
+        public string BannerImagePath { get; set; } = string.Empty;
+
+        public string Bio { get; set; } = string.Empty;
     }
 }

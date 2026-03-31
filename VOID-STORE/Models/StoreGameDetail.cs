@@ -39,6 +39,8 @@ namespace VOID_STORE.Models
 
         public bool IsInCart { get; set; }
 
+        public bool IsInWishlist { get; set; }
+
         public string InstallStatus { get; set; } = "not_installed";
 
         public string InstallStatusText { get; set; } = string.Empty;

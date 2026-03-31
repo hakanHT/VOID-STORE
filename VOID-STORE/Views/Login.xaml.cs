@@ -8,19 +8,19 @@ namespace VOID_STORE.Views
 {
     public partial class Login : Window
     {
-        // giriş isteklerini yönet
+        // giris isteklerini yonet
         private readonly LoginController _loginController;
 
         public Login()
         {
-            // formu başlat
+            // formu baslat
             InitializeComponent();
             _loginController = new LoginController();
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // pencereyi sürükle
+            // pencereyi surukle
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
@@ -29,51 +29,57 @@ namespace VOID_STORE.Views
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            // pencereyi küçült
+            // pencereyi kucult
             WindowState = WindowState.Minimized;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            // uygulamayı kapat
+            // uygulamayi kapat
             Application.Current.Shutdown();
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            // giriş bilgilerini al
+            // giris bilgilerini al
             string usernameOrEmail = txtUsername.Text.Trim();
             string password = txtPassword.Password;
 
-            // boş alanları kontrol et
+            // bos alanlari kontrol et
             if (string.IsNullOrEmpty(usernameOrEmail) || string.IsNullOrEmpty(password))
             {
-                CustomError.ShowDialog("Lütfen kullanıcı adı ve şifrenizi girin.", "GİRİŞ HATASI");
+                CustomError.ShowDialog("Lütfen kullanıcı adı ve şifrenizi girin.", "Giriş Hatası");
                 return;
             }
 
             try
             {
-                // kullanıcı kaydını denetle
+                // kullanici kaydini denetle
                 bool isValidUser = _loginController.ValidateUser(usernameOrEmail, password, out bool isEmailVerified, out bool isAdmin);
 
                 if (!isValidUser)
                 {
-                    CustomError.ShowDialog("Kullanıcı adı veya şifre hatalı.", "GİRİŞ BAŞARISIZ");
+                    CustomError.ShowDialog("Kullanıcı adı veya şifre hatalı.", "Giriş Başarısız");
                     return;
                 }
 
-                // doğrulama durumunu kontrol et
+                // dogrulama durumunu kontrol et
                 if (!isEmailVerified)
                 {
-                    CustomError.ShowDialog("Lütfen e posta adresinize gönderilen doğrulama kodu ile hesabınızı onaylayın.", "DOĞRULANMAMIŞ HESAP");
+                    CustomError.ShowDialog("Lütfen e posta doğrulamasını tamamlayın.", "Doğrulanmamış Hesap");
                     return;
                 }
 
                 AuthenticatedUserInfo authenticatedUser = _loginController.GetAuthenticatedUser(usernameOrEmail);
-                UserSession.SetAuthenticated(authenticatedUser.UserId, authenticatedUser.Username, authenticatedUser.Balance);
+                UserSession.SetAuthenticated(
+                    authenticatedUser.UserId,
+                    authenticatedUser.Username,
+                    authenticatedUser.Balance,
+                    authenticatedUser.ProfileImagePath,
+                    authenticatedUser.BannerImagePath,
+                    authenticatedUser.Bio);
 
-                // yönetici hesabını ayır
+                // yonetici hesabini ayir
                 if (isAdmin)
                 {
                     AdminRoleSelection adminRoleSelection = new AdminRoleSelection
@@ -88,20 +94,20 @@ namespace VOID_STORE.Views
                     return;
                 }
 
-                // ana pencereyi aç
+                // ana pencereyi ac
                 MainAppWindow mainWindow = new();
                 mainWindow.Show();
                 Close();
             }
             catch (Exception ex)
             {
-                CustomError.ShowDialog("Bağlantı sırasında bir hata oluştu: " + ex.Message, "SİSTEM HATASI");
+                CustomError.ShowDialog("Bağlantı sırasında bir hata oluştu: " + ex.Message, "Sistem Hatası");
             }
         }
 
         private void AccountRecovery_Click(object sender, RoutedEventArgs e)
         {
-            // kurtarma ekranını aç
+            // kurtarma ekranini ac
             AccountRecovery recoveryScreen = new()
             {
                 Left = Left,
@@ -115,7 +121,7 @@ namespace VOID_STORE.Views
 
         private void Register_Click(object sender, RoutedEventArgs e)
         {
-            // kayıt ekranını aç
+            // kayit ekranini ac
             Register registerScreen = new()
             {
                 Left = Left,

@@ -10,8 +10,8 @@ namespace VOID_STORE.Views
         {
             InitializeComponent();
 
-        // pencere metnini hazirla
-            txtTitle.Text = title.ToUpperInvariant();
+        // basligi oldugu gibi goster
+            txtTitle.Text = title?.Trim() ?? string.Empty;
             txtMessage.Text = message;
 
             if (isSuccess)
@@ -24,7 +24,7 @@ namespace VOID_STORE.Views
             }
         }
 
-        public static void ShowDialog(string message, string title = "BILGI", bool isSuccess = false, Window? owner = null)
+        public static void ShowDialog(string message, string title = "Bilgi", bool isSuccess = false, Window? owner = null)
         {
             CustomError errorWindow = new CustomError(title, message, isSuccess);
             Window? dialogOwner = owner ?? GetActiveWindow();

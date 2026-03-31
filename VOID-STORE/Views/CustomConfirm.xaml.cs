@@ -9,7 +9,8 @@ namespace VOID_STORE.Views
         {
             InitializeComponent();
 
-            txtTitle.Text = title.ToUpperInvariant();
+            // basligi oldugu gibi goster
+            txtTitle.Text = title?.Trim() ?? string.Empty;
             txtMessage.Text = message;
             btnConfirm.Content = confirmText;
         }

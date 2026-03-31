@@ -15,8 +15,7 @@ namespace VOID_STORE.Controllers
 
         public StoreController()
         {
-            // store açılmadan önce gerekli alanları doğrula
-            AdminGameSchemaManager.EnsureSchema();
+            // controller acilisini hafif tut
         }
 
         public IReadOnlyList<string> GetCategories()

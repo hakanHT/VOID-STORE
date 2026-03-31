@@ -16,7 +16,7 @@ namespace VOID_STORE.Controllers
         public CommerceController()
         {
             // kullanıcı ticaret alanlarını hazırla
-            UserCommerceSchemaManager.EnsureSchema();
+            
         }
 
         public decimal GetBalance(int userId)
@@ -77,13 +77,13 @@ namespace VOID_STORE.Controllers
             // oturum olmadan işleme girme
             if (userId <= 0)
             {
-                throw new InvalidOperationException("Bu işlem için giriş yapmanız gerekiyor");
+                throw new InvalidOperationException("Bu işlem için giriş yapmanız gerekiyor.");
             }
 
             // sıfır ve altı tutarı reddet
             if (amount <= 0)
             {
-                throw new InvalidOperationException("Yüklenecek tutar sıfırdan büyük olmalıdır");
+                throw new InvalidOperationException("Yüklenecek tutar sıfırdan büyük olmalıdır.");
             }
 
             // bakiye ve hareket kaydını aynı transaction içinde tut
@@ -264,25 +264,25 @@ namespace VOID_STORE.Controllers
             // oturum kontrolü yap
             if (userId <= 0)
             {
-                throw new InvalidOperationException("Sepet işlemi için giriş yapmanız gerekiyor");
+                throw new InvalidOperationException("Sepet işlemi için giriş yapmanız gerekiyor.");
             }
 
             // oyun geçerli mi kontrol et
             if (!GameExists(gameId))
             {
-                throw new InvalidOperationException("Seçilen oyun mağazada bulunamadı");
+                throw new InvalidOperationException("Seçilen oyun mağazada bulunamadı.");
             }
 
             // sahip olunan oyun tekrar sepete girmesin
             if (GetOwnedGameIds(userId).Contains(gameId))
             {
-                throw new InvalidOperationException("Bu oyun zaten kütüphanenizde bulunuyor");
+                throw new InvalidOperationException("Bu oyun zaten kütüphanenizde bulunuyor.");
             }
 
             // aynı oyunu ikinci kez sepete alma
             if (GetCartGameIds(userId).Contains(gameId))
             {
-                throw new InvalidOperationException("Bu oyun zaten sepetinizde bulunuyor");
+                throw new InvalidOperationException("Bu oyun zaten sepetinizde bulunuyor.");
             }
 
             // yeni sepet kaydını yaz
@@ -315,7 +315,7 @@ namespace VOID_STORE.Controllers
             // satın alma sadece oturumla ilerler
             if (userId <= 0)
             {
-                throw new InvalidOperationException("Satın alma işlemi için giriş yapmanız gerekiyor");
+                throw new InvalidOperationException("Satın alma işlemi için giriş yapmanız gerekiyor.");
             }
 
             // kütüphane sepet bakiye hareketine tek transaction uygula
@@ -331,7 +331,7 @@ namespace VOID_STORE.Controllers
                 // boş sepette checkout yapma
                 if (cartEntries.Count == 0)
                 {
-                    throw new InvalidOperationException("Satın alınacak oyun bulunamadı");
+                    throw new InvalidOperationException("Satın alınacak oyun bulunamadı.");
                 }
 
                 // toplam tutarı hesapla
@@ -341,7 +341,7 @@ namespace VOID_STORE.Controllers
                 // bakiye yetersizse işlemi durdur
                 if (balanceBefore < totalAmount)
                 {
-                    throw new InvalidOperationException("Bakiyeniz bu satın alma işlemi için yeterli değil");
+                    throw new InvalidOperationException("Bakiyeniz bu satın alma işlemi için yeterli değil!");
                 }
 
                 // tek satın alma zamanı kullan
@@ -359,6 +359,16 @@ namespace VOID_STORE.Controllers
                         new SqlParameter("@GameId", gameId),
                         new SqlParameter("@PurchasedPrice", price),
                         new SqlParameter("@PurchasedAt", purchaseTime));
+
+                    // satin alinan oyunu istek listesinden cikar
+                    ExecuteNonQuery(
+                        connection,
+                        transaction,
+                        @"DELETE FROM WishlistItems
+                          WHERE UserId = @UserId
+                            AND GameId = @GameId;",
+                        new SqlParameter("@UserId", userId),
+                        new SqlParameter("@GameId", gameId));
                 }
 
                 // yeni bakiyeyi hesapla
@@ -503,7 +513,7 @@ namespace VOID_STORE.Controllers
             // kayıt yoksa işleme devam etme
             if (result == null || result == DBNull.Value)
             {
-                throw new InvalidOperationException("Kullanıcı kaydı bulunamadı");
+                throw new InvalidOperationException("Kullanıcı kaydı bulunamadı!");
             }
 
             return Convert.ToDecimal(result, CultureInfo.InvariantCulture);

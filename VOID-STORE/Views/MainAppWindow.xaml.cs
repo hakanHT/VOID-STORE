@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using Microsoft.Web.WebView2.Core;
 using VOID_STORE.Controllers;
 using VOID_STORE.Models;
@@ -415,6 +416,12 @@ namespace VOID_STORE.Views
         private int _currentPage = 1;
         private string _selectedCategory = "Tümü";
         private string _selectedLibraryCategory = "Tümü";
+        private bool _isWishlistViewActive;
+        private bool _isProfileEditMode;
+        private string _pendingAvatarSourcePath = string.Empty;
+
+        // kaydedilmemis banner secimini tut
+        private string _pendingBannerSourcePath = string.Empty;
         private readonly DispatcherTimer _trailerProgressTimer;
         private readonly DispatcherTimer _trailerOverlayTimer;
         private List<StoreGameCardItem> _storeItems = new();
@@ -458,14 +465,64 @@ namespace VOID_STORE.Views
 
             EnsureSession();
             ConfigureProfileArea();
-            InitializeCommerceState();
-            InitializeDownloadState();
-            BuildCategories();
             UpdateSearchPlaceholder();
             ShowStoreView();
-            LoadStorePage();
             UpdateWindowGlyph();
-            Dispatcher.BeginInvoke(new Action(() => UpdateStoreGridColumns()), DispatcherPriority.Loaded);
+
+            try
+            {
+                // semalari guvenli blokta hazirla
+                AdminGameSchemaManager.EnsureSchema();
+                UserCommerceSchemaManager.EnsureSchema();
+
+                InitializeCommerceState();
+                InitializeDownloadState();
+                BuildCategories();
+                LoadStorePage();
+                Dispatcher.BeginInvoke(new Action(() => UpdateStoreGridColumns()), DispatcherPriority.Loaded);
+            }
+            catch (Exception ex)
+            {
+                // veritabani yokken pencereyi dusurme
+                InitializeStoreFallbackState();
+                CustomError.ShowDialog($"Veritabanına bağlanılamadı: {ex.Message}", "Sistem Hatası", owner: this);
+            }
+        }
+
+        private void InitializeStoreFallbackState()
+        {
+            // veritabani yoksa bos kabukla ac
+            _categories = new List<StoreCategoryItem>
+            {
+                new StoreCategoryItem { Name = "Tümü", IsSelected = true }
+            };
+            _libraryCategories = new List<StoreCategoryItem>
+            {
+                new StoreCategoryItem { Name = "Tümü", IsSelected = true }
+            };
+            _storeItems = new List<StoreGameCardItem>();
+            _libraryItems = new List<LibraryGameItem>();
+            _downloadItems = new List<DownloadQueueItem>();
+            _walletTransactions = new List<WalletTransactionItem>();
+            _wishlistItems = new List<WishlistGameItem>();
+            _ownedGameIds = new HashSet<int>();
+            _cartGameIds = new HashSet<int>();
+            _wishlistGameIds = new HashSet<int>();
+            _downloadStates = new Dictionary<int, DownloadStateItem>();
+
+            RefreshCategoryItems();
+            RefreshLibraryCategoryItems();
+            icStoreGames.ItemsSource = null;
+            icStoreGames.ItemsSource = _storeItems;
+            EmptyStoreState.Visibility = Visibility.Visible;
+            txtStoreResultInfo.Text = "Veritabanı bağlantısı kurulamadı";
+            txtPageInfo.Text = "-";
+            txtPageInfo.Visibility = Visibility.Collapsed;
+            btnPreviousPage.Visibility = Visibility.Collapsed;
+            btnNextPage.Visibility = Visibility.Collapsed;
+            btnPreviousPage.IsEnabled = false;
+            btnNextPage.IsEnabled = false;
+            _downloadQueueTimer.Stop();
         }
 
         private async Task EnsureTrailerPlayerAsync()
@@ -605,11 +662,11 @@ namespace VOID_STORE.Views
 
                     case "error":
                         string message = root.TryGetProperty("message", out JsonElement messageElement)
-                            ? messageElement.GetString() ?? "Fragman videosu acilamadi."
-                            : "Fragman videosu acilamadi.";
+                            ? messageElement.GetString() ?? "Fragman videosu açılamadı."
+                            : "Fragman videosu açılamadı.";
                         _trailerProgressTimer.Stop();
                         _isTrailerPlaying = false;
-                        CustomError.ShowDialog("Fragman videosu acilamadi: " + message, "SISTEM HATASI", owner: this);
+                        CustomError.ShowDialog("Fragman videosu açılamadı: " + message, "Sistem Hatası", owner: this);
                         CloseTrailerButton_Click(this, new RoutedEventArgs());
                         break;
                 }
@@ -671,27 +728,12 @@ namespace VOID_STORE.Views
                 btnProfileSecondaryAction.Content = "Çıkış Yap";
             }
 
-            if (!string.IsNullOrWhiteSpace(UserSession.ProfileImagePath) && File.Exists(UserSession.ProfileImagePath))
-            {
-                BitmapImage image = new BitmapImage();
-                image.BeginInit();
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.UriSource = new Uri(UserSession.ProfileImagePath, UriKind.Absolute);
-                image.EndInit();
-                image.Freeze();
+            BitmapImage? headerAvatar = GameAssetManager.LoadBitmap(UserSession.ProfileImagePath);
 
-                imgProfile.Source = image;
-                imgProfile.Visibility = Visibility.Visible;
-                txtProfileInitial.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                imgProfile.Source = null;
-                imgProfile.Visibility = Visibility.Collapsed;
-                txtProfileInitial.Visibility = Visibility.Visible;
-            }
+            ApplyProfileImagePreview(imgProfile, txtProfileInitial, headerAvatar, UserSession.GetAvatarLetter());
 
             RefreshWalletPage();
+            RefreshProfilePage();
         }
 
         private void BuildCategories()
@@ -811,11 +853,14 @@ namespace VOID_STORE.Views
             _isLibraryViewActive = false;
             _isDownloadsViewActive = false;
             _isInstallViewActive = false;
+            _isWishlistViewActive = false;
             StoreHeaderPanel.Visibility = Visibility.Visible;
             StoreContentPanel.Visibility = Visibility.Visible;
             LibraryContentPanel.Visibility = Visibility.Collapsed;
             DownloadsContentPanel.Visibility = Visibility.Collapsed;
             WalletContentPanel.Visibility = Visibility.Collapsed;
+            ProfileContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Collapsed;
             DetailHeaderPanel.Visibility = Visibility.Collapsed;
             DetailContentPanel.Visibility = Visibility.Collapsed;
             InstallContentPanel.Visibility = Visibility.Collapsed;
@@ -857,6 +902,7 @@ namespace VOID_STORE.Views
             _currentDetail = detail;
             _isDownloadsViewActive = false;
             _isInstallViewActive = false;
+            _isWishlistViewActive = false;
 
             txtDetailCategory.Text = detail.Category;
             txtDetailTitle.Text = detail.Title;
@@ -895,6 +941,9 @@ namespace VOID_STORE.Views
             StoreContentPanel.Visibility = Visibility.Collapsed;
             LibraryContentPanel.Visibility = Visibility.Collapsed;
             DownloadsContentPanel.Visibility = Visibility.Collapsed;
+            WalletContentPanel.Visibility = Visibility.Collapsed;
+            ProfileContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Collapsed;
             DetailHeaderPanel.Visibility = Visibility.Visible;
             DetailContentPanel.Visibility = Visibility.Visible;
             InstallContentPanel.Visibility = Visibility.Collapsed;
@@ -1099,6 +1148,15 @@ namespace VOID_STORE.Views
 
             selectedButton.Background = System.Windows.Media.Brushes.White;
             selectedButton.Foreground = System.Windows.Media.Brushes.Black;
+        }
+
+        private void ClearSidebarSelection()
+        {
+            // sidebar secimi yoksa tumunu varsayilana cek
+            _activeSidebarButton = null;
+            ResetSidebarButton(btnStoreNav);
+            ResetSidebarButton(btnLibraryNav);
+            ResetSidebarButton(btnDownloadsNav);
         }
 
         private void ResetSidebarButton(Button button)
@@ -1397,7 +1455,7 @@ namespace VOID_STORE.Views
             }
             catch (Exception ex)
             {
-                CustomError.ShowDialog("Oyun sayfası açılamadı: " + ex.Message, "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog("Oyun sayfası açılamadı: " + ex.Message, "Sistem Hatası", owner: this);
             }
         }
 
@@ -1470,7 +1528,7 @@ namespace VOID_STORE.Views
 
                 if (string.IsNullOrWhiteSpace(absoluteTrailerPath) || !File.Exists(absoluteTrailerPath))
                 {
-                    CustomError.ShowDialog("Fragman videosu bulunamadı.", "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog("Fragman videosu bulunamadı.", "Sistem Hatası", owner: this);
                     return;
                 }
 
@@ -1503,7 +1561,7 @@ namespace VOID_STORE.Views
             }
             catch (Exception ex)
             {
-                CustomError.ShowDialog("Fragman videosu açılamadı: " + ex.Message, "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog("Fragman videosu açılamadı: " + ex.Message, "Sistem Hatası", owner: this);
             }
         }
 
@@ -1772,13 +1830,26 @@ namespace VOID_STORE.Views
         private void FriendsButton_Click(object sender, RoutedEventArgs e)
         {
             // arkadas alani simdilik kabuk olarak durur
-            CustomError.ShowDialog("Arkadaş alanı henüz hazır değil.", "BILGI", owner: this);
+            CustomError.ShowDialog("Arkadaş alanı henüz hazır değil.", "Bilgi", owner: this);
         }
 
         private void HeaderShellButton_Click(object sender, RoutedEventArgs e)
         {
+            // istek listesi tam sayfaya acilsin
+            if (sender == btnWishlistHeader)
+            {
+                if (UserSession.IsGuest)
+                {
+                    CustomError.ShowDialog("İstek listesi için giriş yapmanız gerekiyor.", "Bilgi", owner: this);
+                    return;
+                }
+
+                ShowWishlistView();
+                return;
+            }
+
             // ust menudeki alanlar simdilik yonlendirme amacli kalir
-            CustomError.ShowDialog("Bu bölüm henüz hazır değil.", "BILGI", owner: this);
+            CustomError.ShowDialog("Bu bölüm henüz hazır değil.", "Bilgi", owner: this);
         }
 
         private void ProfileMenuButton_Click(object sender, RoutedEventArgs e)
@@ -1794,19 +1865,19 @@ namespace VOID_STORE.Views
 
             if (UserSession.IsGuest)
             {
-                Register registerWindow = new Register
+                Login loginWindow = new Login
                 {
                     Left = Left,
                     Top = Top,
                     WindowStartupLocation = WindowStartupLocation.Manual
                 };
 
-                registerWindow.Show();
+                loginWindow.Show();
                 Close();
                 return;
             }
 
-            CustomError.ShowDialog("Profil düzenleme bölümü henüz hazır değil.", "BILGI", owner: this);
+            ShowProfileView();
         }
 
         private void ProfileSecondaryAction_Click(object sender, RoutedEventArgs e)
@@ -1828,7 +1899,7 @@ namespace VOID_STORE.Views
                 return;
             }
 
-            if (!CustomConfirm.ShowDialog("Çıkış Yap", "Oturumu kapatmak istiyor musun", "Çıkış Yap", this))
+            if (!CustomConfirm.ShowDialog("Çıkış Yap", "Oturumu kapatmak istiyor musun?", "Çıkış Yap", this))
             {
                 return;
             }
@@ -1871,22 +1942,65 @@ namespace VOID_STORE.Views
                 _commerceController.AddToCart(UserSession.UserId, _currentDetail.GameId);
                 RefreshCommerceState(false);
                 ApplyDetailOwnershipState();
-                CustomError.ShowDialog("Oyun sepete eklendi.", "BILGI", owner: this);
+                CustomError.ShowDialog("Oyun sepete eklendi.", "Bilgi", owner: this);
             }
             catch (Exception ex)
             {
-                CustomError.ShowDialog(ex.Message, "BILGI", owner: this);
+                CustomError.ShowDialog(ex.Message, "Bilgi", owner: this);
             }
         }
 
         private void AddToWishlistButton_Click(object sender, RoutedEventArgs e)
         {
-            // istek listesi akisi hafta sonrasi icin hazir kalir
-            CustomError.ShowDialog("İstek listesi bölümü henüz hazır değil.", "BILGI", owner: this);
+            // detay ekranindaki oyunu istek listesine ekle cikar
+            if (_currentDetail == null)
+            {
+                return;
+            }
+
+            if (UserSession.IsGuest)
+            {
+                CustomError.ShowDialog("İstek listesi için giriş yapmanız gerekiyor.", "Bilgi", owner: this);
+                return;
+            }
+
+            try
+            {
+                bool isInWishlist = _wishlistController.ToggleWishlist(UserSession.UserId, _currentDetail.GameId);
+                RefreshCommerceState(false);
+                ApplyDetailOwnershipState();
+
+                if (_isWishlistViewActive)
+                {
+                    RefreshWishlistPage();
+                }
+
+                if (_currentDetail.IsOwned)
+                {
+                    CustomError.ShowDialog("Bu oyun kütüphanende bulunduğu için istek listesinde tutulmadı.", "Bilgi", owner: this);
+                }
+                else
+                {
+                    CustomError.ShowDialog(
+                        isInWishlist ? "Oyun istek listene eklendi." : "Oyun istek listesinden çıkarıldı.",
+                        "Bilgi",
+                        owner: this);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomError.ShowDialog($"İstek listesi güncellenemedi: {ex.Message}", "Sistem Hatası", owner: this);
+            }
         }
 
         // ticaret akışlarını tek yerden yönet
         private readonly CommerceController _commerceController = new();
+
+        // istek listesi akışını yönet
+        private readonly WishlistController _wishlistController = new();
+
+        // profil akışını yönet
+        private readonly ProfileController _profileController = new();
 
         // anlık sepet verisini tut
         private List<CartGameItem> _cartItems = new();
@@ -1903,11 +2017,23 @@ namespace VOID_STORE.Views
         // sepetteki oyunları hızlı sorgula
         private HashSet<int> _cartGameIds = new();
 
+        // istek listesindeki oyunları hızlı sorgula
+        private HashSet<int> _wishlistGameIds = new();
+
         // indirme durumlarını oyun koduna göre tut
         private Dictionary<int, DownloadStateItem> _downloadStates = new();
 
         // indirmeler sayfası için görünüm modelini tut
         private List<DownloadQueueItem> _downloadItems = new();
+
+        // istek listesinin görünüm modelini tut
+        private List<WishlistGameItem> _wishlistItems = new();
+
+        // profil özetini tek yerde tut
+        private ProfileSummary? _profileSummary;
+
+        // son oynanan oyunları tut
+        private List<ProfileRecentPlayItem> _profileRecentPlays = new();
 
         // indirme akışını ayrı controller ile yönet
         private readonly DownloadController _downloadController = new();
@@ -1963,6 +2089,10 @@ namespace VOID_STORE.Views
                     _walletTransactions = new List<WalletTransactionItem>();
                     _ownedGameIds = new HashSet<int>();
                     _cartGameIds = new HashSet<int>();
+                    _wishlistGameIds = new HashSet<int>();
+                    _wishlistItems = new List<WishlistGameItem>();
+                    _profileSummary = null;
+            _profileRecentPlays = new List<ProfileRecentPlayItem>();
                     _downloadStates = new Dictionary<int, DownloadStateItem>();
                     _downloadItems = new List<DownloadQueueItem>();
                 }
@@ -1980,19 +2110,29 @@ namespace VOID_STORE.Views
                     // hızlı kontrol setlerini doldur
                     _ownedGameIds = _commerceController.GetOwnedGameIds(UserSession.UserId);
                     _cartGameIds = _commerceController.GetCartGameIds(UserSession.UserId);
+                    _wishlistGameIds = _wishlistController.GetWishlistGameIds(UserSession.UserId);
+                    _wishlistItems = _wishlistController.GetWishlistItems(UserSession.UserId).ToList();
+                    _profileSummary = _profileController.GetProfileSummary(UserSession.UserId);
+                    _profileRecentPlays = _profileController.GetRecentPlays(UserSession.UserId).ToList();
+                    UserSession.UpdateProfile(
+                        _profileSummary.ProfileImagePath,
+                        _profileSummary.BannerImagePath,
+                        _profileSummary.Bio);
                 }
 
                 // indirme durumunu da ana veriyle beraber yükle
                 RefreshDownloadState(showErrors);
                 RefreshCartPopup();
                 RefreshWalletPage();
+                RefreshProfilePage();
+                RefreshWishlistPage();
             }
             catch (Exception ex)
             {
                 // hata ekrana kontrollü yansın
                 if (showErrors)
                 {
-                    CustomError.ShowDialog($"Ticaret verileri yüklenemedi {ex.Message}", "SISTEM HATASI", owner: this);
+                    CustomError.ShowDialog($"Ticaret verileri yüklenemedi: {ex.Message}", "Sistem Hatası", owner: this);
                 }
             }
         }
@@ -2028,7 +2168,7 @@ namespace VOID_STORE.Views
                 // indirme hatasını ayrı yakala
                 if (showErrors)
                 {
-                    CustomError.ShowDialog($"İndirme verileri yüklenemedi {ex.Message}", "SISTEM HATASI", owner: this);
+                    CustomError.ShowDialog($"İndirme verileri yüklenemedi: {ex.Message}", "Sistem Hatası", owner: this);
                 }
             }
         }
@@ -2071,6 +2211,7 @@ namespace VOID_STORE.Views
             // seçili oyunun sahiplik bilgisini güncelle
             _currentDetail.IsOwned = _ownedGameIds.Contains(_currentDetail.GameId);
             _currentDetail.IsInCart = !_currentDetail.IsOwned && _cartGameIds.Contains(_currentDetail.GameId);
+            _currentDetail.IsInWishlist = !_currentDetail.IsOwned && _wishlistGameIds.Contains(_currentDetail.GameId);
 
             // durum metnini varsayılan olarak gizle
             txtDetailOwnershipState.Visibility = Visibility.Collapsed;
@@ -2086,6 +2227,8 @@ namespace VOID_STORE.Views
                 btnDetailAddToCart.BorderBrush = CreateBrush("#FFFFFF");
                 btnDetailAddToCart.Foreground = CreateBrush("#0A0A0C");
                 btnDetailAddToCart.IsEnabled = true;
+                btnDetailWishlist.Content = BuildDetailPrimaryActionContent("İstek Listesine Ekle", "\uE734");
+                btnDetailWishlist.IsEnabled = true;
                 HideDetailInstallPanel();
                 return;
             }
@@ -2101,6 +2244,8 @@ namespace VOID_STORE.Views
                 btnDetailAddToCart.BorderBrush = CreateBrush("#31C653");
                 btnDetailAddToCart.Foreground = CreateBrush("#FFFFFF");
                 btnDetailAddToCart.IsEnabled = true;
+                btnDetailWishlist.Content = BuildDetailPrimaryActionContent("Kütüphanende", "\uE8F1");
+                btnDetailWishlist.IsEnabled = false;
                 return;
             }
 
@@ -2115,6 +2260,10 @@ namespace VOID_STORE.Views
                 btnDetailAddToCart.BorderBrush = CreateBrush("#1C1C22");
                 btnDetailAddToCart.Foreground = CreateBrush("#FFFFFF");
                 btnDetailAddToCart.IsEnabled = false;
+                btnDetailWishlist.Content = _currentDetail.IsInWishlist
+                    ? BuildDetailPrimaryActionContent("İstek Listesinden Çıkar", "\uE8D9")
+                    : BuildDetailPrimaryActionContent("İstek Listesine Ekle", "\uE734");
+                btnDetailWishlist.IsEnabled = true;
                 HideDetailInstallPanel();
                 return;
             }
@@ -2125,6 +2274,10 @@ namespace VOID_STORE.Views
             btnDetailAddToCart.BorderBrush = CreateBrush("#FFFFFF");
             btnDetailAddToCart.Foreground = CreateBrush("#0A0A0C");
             btnDetailAddToCart.IsEnabled = true;
+            btnDetailWishlist.Content = _currentDetail.IsInWishlist
+                ? BuildDetailPrimaryActionContent("İstek Listesinden Çıkar", "\uE8D9")
+                : BuildDetailPrimaryActionContent("İstek Listesine Ekle", "\uE734");
+            btnDetailWishlist.IsEnabled = true;
             HideDetailInstallPanel();
         }
 
@@ -2675,6 +2828,7 @@ namespace VOID_STORE.Views
             // kütüphane ve indirme için ayrı kurulum ekranı aç
             _currentDetail = detail;
             _isInstallViewActive = true;
+            _isWishlistViewActive = false;
             _currentInstallHeroPreview = SelectInstallHeroPreview(detail);
 
             StoreHeaderPanel.Visibility = Visibility.Visible;
@@ -2682,6 +2836,8 @@ namespace VOID_STORE.Views
             LibraryContentPanel.Visibility = Visibility.Collapsed;
             DownloadsContentPanel.Visibility = Visibility.Collapsed;
             WalletContentPanel.Visibility = Visibility.Collapsed;
+            ProfileContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Collapsed;
             DetailHeaderPanel.Visibility = Visibility.Collapsed;
             DetailContentPanel.Visibility = Visibility.Collapsed;
             InstallContentPanel.Visibility = Visibility.Visible;
@@ -2786,6 +2942,7 @@ namespace VOID_STORE.Views
             _isLibraryViewActive = true;
             _isDownloadsViewActive = false;
             _isInstallViewActive = false;
+            _isWishlistViewActive = false;
 
             // sadece ilgili panelleri aç
             StoreHeaderPanel.Visibility = Visibility.Visible;
@@ -2793,6 +2950,8 @@ namespace VOID_STORE.Views
             LibraryContentPanel.Visibility = Visibility.Visible;
             DownloadsContentPanel.Visibility = Visibility.Collapsed;
             WalletContentPanel.Visibility = Visibility.Collapsed;
+            ProfileContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Collapsed;
             DetailHeaderPanel.Visibility = Visibility.Collapsed;
             DetailContentPanel.Visibility = Visibility.Collapsed;
             InstallContentPanel.Visibility = Visibility.Collapsed;
@@ -2810,6 +2969,7 @@ namespace VOID_STORE.Views
             _isLibraryViewActive = false;
             _isDownloadsViewActive = false;
             _isInstallViewActive = false;
+            _isWishlistViewActive = false;
 
             // sadece cüzdan panelini aç
             StoreHeaderPanel.Visibility = Visibility.Visible;
@@ -2817,6 +2977,8 @@ namespace VOID_STORE.Views
             LibraryContentPanel.Visibility = Visibility.Collapsed;
             DownloadsContentPanel.Visibility = Visibility.Collapsed;
             WalletContentPanel.Visibility = Visibility.Visible;
+            ProfileContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Collapsed;
             DetailHeaderPanel.Visibility = Visibility.Collapsed;
             DetailContentPanel.Visibility = Visibility.Collapsed;
             InstallContentPanel.Visibility = Visibility.Collapsed;
@@ -2834,6 +2996,7 @@ namespace VOID_STORE.Views
             _isLibraryViewActive = false;
             _isDownloadsViewActive = true;
             _isInstallViewActive = false;
+            _isWishlistViewActive = false;
 
             // yalnızca indirme panelini aç
             StoreHeaderPanel.Visibility = Visibility.Visible;
@@ -2841,6 +3004,8 @@ namespace VOID_STORE.Views
             LibraryContentPanel.Visibility = Visibility.Collapsed;
             DownloadsContentPanel.Visibility = Visibility.Visible;
             WalletContentPanel.Visibility = Visibility.Collapsed;
+            ProfileContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Collapsed;
             DetailHeaderPanel.Visibility = Visibility.Collapsed;
             DetailContentPanel.Visibility = Visibility.Collapsed;
             InstallContentPanel.Visibility = Visibility.Collapsed;
@@ -2869,6 +3034,20 @@ namespace VOID_STORE.Views
                 if (changed || launchChanged)
                 {
                     RefreshDownloadState(false);
+
+                    // kapanan oyun profilde hemen gorunsun
+                    if (launchChanged)
+                    {
+                        _profileSummary = _profileController.GetProfileSummary(UserSession.UserId);
+                        _profileRecentPlays = _profileController.GetRecentPlays(UserSession.UserId).ToList();
+
+                        UserSession.UpdateProfile(
+                            _profileSummary.ProfileImagePath,
+                            _profileSummary.BannerImagePath,
+                            _profileSummary.Bio);
+
+                        RefreshProfilePage();
+                    }
                 }
                 else if (_isInstallViewActive && _currentDetail != null && _launchController.IsRunning(_currentDetail.GameId))
                 {
@@ -2878,7 +3057,7 @@ namespace VOID_STORE.Views
             catch (Exception ex)
             {
                 // arka plan hatasını tek noktada göster
-                CustomError.ShowDialog($"İndirme güncellenemedi {ex.Message}", "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog($"İndirme güncellenemedi: {ex.Message}", "Sistem Hatası", owner: this);
             }
             finally
             {
@@ -2979,7 +3158,7 @@ namespace VOID_STORE.Views
             catch (Exception ex)
             {
                 // kullanıcıya net aksiyon hatası göster
-                CustomError.ShowDialog($"Kurulum işlemi tamamlanamadı {ex.Message}", "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog($"Kurulum işlemi tamamlanamadı: {ex.Message}", "Sistem Hatası", owner: this);
             }
         }
 
@@ -2999,11 +3178,11 @@ namespace VOID_STORE.Views
                 {
                     if (_launchController.IsRunning(gameId))
                     {
-                        CustomError.ShowDialog("Oyun çalışırken kaldırılamaz", "BILGI", owner: this);
+                        CustomError.ShowDialog("Oyun çalışırken kaldırılamaz.", "Bilgi", owner: this);
                         return;
                     }
 
-                    if (!CustomConfirm.ShowDialog("Kaldır", "Bu oyunu sisteminizden silmek istediğinize emin misiniz", "Kaldır", this))
+                    if (!CustomConfirm.ShowDialog("Kaldır", "Bu oyunu sisteminizden silmek istediğinize emin misiniz?", "Kaldır", this))
                     {
                         return;
                     }
@@ -3012,7 +3191,7 @@ namespace VOID_STORE.Views
                 }
                 else
                 {
-                    if (!CustomConfirm.ShowDialog("İptal", "Bu kurulum indirme listesinden çıkarılsın mı", "İptal", this))
+                    if (!CustomConfirm.ShowDialog("İptal", "Bu kurulum indirme listesinden çıkarılsın mı?", "İptal", this))
                     {
                         return;
                     }
@@ -3025,7 +3204,7 @@ namespace VOID_STORE.Views
             catch (Exception ex)
             {
                 // ikincil aksiyon hatasını göster
-                CustomError.ShowDialog($"Kurulum değiştirilemedi {ex.Message}", "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog($"Kurulum değiştirilemedi: {ex.Message}", "Sistem Hatası", owner: this);
             }
         }
 
@@ -3034,7 +3213,7 @@ namespace VOID_STORE.Views
             // kurulu klasörü dosya gezgininde aç
             if (string.IsNullOrWhiteSpace(installPath) || !Directory.Exists(installPath))
             {
-                CustomError.ShowDialog("Kurulum klasörü bulunamadı", "BILGI", owner: this);
+                CustomError.ShowDialog("Kurulum klasörü bulunamadı.", "Bilgi", owner: this);
                 return;
             }
 
@@ -3049,7 +3228,340 @@ namespace VOID_STORE.Views
             catch (Exception ex)
             {
                 // dosya gezgini acilmazsa bilgi ver
-                CustomError.ShowDialog($"Kurulum klasörü açılamadı {ex.Message}", "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog($"Kurulum klasörü açılamadı: {ex.Message}", "Sistem Hatası", owner: this);
+            }
+        }
+
+        private void ShowProfileView()
+        {
+            // profil sayfasini tek akista ac
+            StopTrailer();
+            popCartMenu.IsOpen = false;
+            _isLibraryViewActive = false;
+            _isDownloadsViewActive = false;
+            _isInstallViewActive = false;
+            _isWishlistViewActive = false;
+
+            StoreHeaderPanel.Visibility = Visibility.Visible;
+            StoreContentPanel.Visibility = Visibility.Collapsed;
+            LibraryContentPanel.Visibility = Visibility.Collapsed;
+            DownloadsContentPanel.Visibility = Visibility.Collapsed;
+            WalletContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Collapsed;
+            DetailHeaderPanel.Visibility = Visibility.Collapsed;
+            DetailContentPanel.Visibility = Visibility.Collapsed;
+            InstallContentPanel.Visibility = Visibility.Collapsed;
+            ProfileContentPanel.Visibility = Visibility.Visible;
+
+            ClearSidebarSelection();
+            EnterProfileEditMode(false);
+            RefreshProfilePage();
+        }
+
+        private void ShowWishlistView()
+        {
+            // istek listesi sayfasini tam akista ac
+            StopTrailer();
+            popCartMenu.IsOpen = false;
+            _isLibraryViewActive = false;
+            _isDownloadsViewActive = false;
+            _isInstallViewActive = false;
+            _isWishlistViewActive = true;
+
+            StoreHeaderPanel.Visibility = Visibility.Visible;
+            StoreContentPanel.Visibility = Visibility.Collapsed;
+            LibraryContentPanel.Visibility = Visibility.Collapsed;
+            DownloadsContentPanel.Visibility = Visibility.Collapsed;
+            WalletContentPanel.Visibility = Visibility.Collapsed;
+            ProfileContentPanel.Visibility = Visibility.Collapsed;
+            DetailHeaderPanel.Visibility = Visibility.Collapsed;
+            DetailContentPanel.Visibility = Visibility.Collapsed;
+            InstallContentPanel.Visibility = Visibility.Collapsed;
+            WishlistContentPanel.Visibility = Visibility.Visible;
+
+            ClearSidebarSelection();
+            RefreshWishlistPage();
+        }
+
+        private void RefreshWishlistPage()
+        {
+            // istek listesi sayfasini guncelle
+            icWishlistGames.ItemsSource = null;
+            icWishlistGames.ItemsSource = _wishlistItems;
+
+            if (UserSession.IsGuest)
+            {
+                txtWishlistResultInfo.Text = "İstek listesini görmek için giriş yap";
+                txtWishlistEmptyTitle.Text = "İstek listesi oturumla açılır";
+                txtWishlistEmptyMessage.Text = "Beğendiğin oyunları burada biriktirebilirsin";
+            }
+            else if (_wishlistItems.Count == 0)
+            {
+                txtWishlistResultInfo.Text = "Henüz istek listene eklenen oyun yok";
+                txtWishlistEmptyTitle.Text = "İstek listesi boş";
+                txtWishlistEmptyMessage.Text = "Mağazada yıldız butonu ile oyun ekleyebilirsin";
+            }
+            else
+            {
+                txtWishlistResultInfo.Text = _wishlistItems.Count == 1
+                    ? "1 oyun istek listesinde görünüyor"
+                    : $"{_wishlistItems.Count} oyun istek listesinde görünüyor";
+                txtWishlistEmptyTitle.Text = "İstek listesi boş";
+                txtWishlistEmptyMessage.Text = "Mağazada yıldız butonu ile oyun ekleyebilirsin";
+            }
+
+            EmptyWishlistState.Visibility = _wishlistItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            WishlistGamesScrollViewer.Visibility = _wishlistItems.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void RefreshProfilePage()
+        {
+            // profil sayfasi verisini yenile
+            if (_profileSummary == null)
+            {
+                // oturum ozetini varsayilan degerlerle doldur
+                txtProfilePageUsername.Text = UserSession.DisplayName;
+                txtProfilePageHandle.Text = UserSession.IsGuest ? "Misafir" : $"@{UserSession.Username}";
+                txtProfilePageBio.Text = "Henüz profil açıklaması eklenmedi";
+                txtProfilePageBioEdit.Text = string.Empty;
+                txtProfileOwnedCount.Text = "0";
+                txtProfilePlayTime.Text = "-";
+                txtProfileFriendsCount.Text = "0";
+                ApplyProfileBackdrop(null, null);
+                imgProfileAvatarPage.Source = null;
+                txtProfileAvatarInitial.Text = UserSession.GetAvatarLetter();
+                txtProfileAvatarInitial.Visibility = Visibility.Visible;
+                EmptyRecentPlaysState.Visibility = Visibility.Visible;
+                icProfileRecentPlays.ItemsSource = null;
+                return;
+            }
+
+            // veritabanindan gelen profil alanlarini ekrana bas
+            txtProfilePageUsername.Text = _profileSummary.DisplayName;
+            txtProfilePageHandle.Text = $"@{_profileSummary.Username}";
+            txtProfilePageBio.Text = string.IsNullOrWhiteSpace(_profileSummary.Bio)
+                ? "Henüz profil açıklaması eklenmedi"
+                : _profileSummary.Bio;
+            txtProfilePageBioEdit.Text = _profileSummary.Bio;
+            txtProfileOwnedCount.Text = _profileSummary.OwnedGameCount.ToString();
+            txtProfilePlayTime.Text = BuildPlayTimeText(_profileSummary.TotalPlaySeconds);
+            txtProfileFriendsCount.Text = _profileSummary.FriendsCount.ToString();
+
+            // avatar ve banner onizlemelerini ayni anda guncelle
+            ApplyProfileImagePreview(
+                imgProfileAvatarPage,
+                txtProfileAvatarInitial,
+                _profileSummary.AvatarPreview,
+                UserSession.GetAvatarLetter());
+            ApplyProfileBackdrop(_profileSummary.BannerPreview, _profileSummary.AvatarPreview);
+
+            // son etkinlikleri yeni veriyle yenile
+            icProfileRecentPlays.ItemsSource = null;
+            icProfileRecentPlays.ItemsSource = _profileRecentPlays;
+            EmptyRecentPlaysState.Visibility = _profileRecentPlays.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void ApplyProfileImagePreview(Image image, TextBlock fallbackText, BitmapImage? preview, string fallbackLetter)
+        {
+            // avatar yoksa harf goster
+            if (preview != null)
+            {
+                image.Source = preview;
+                image.Visibility = Visibility.Visible;
+                fallbackText.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            image.Source = null;
+            image.Visibility = Visibility.Collapsed;
+            fallbackText.Text = fallbackLetter;
+            fallbackText.Visibility = Visibility.Visible;
+        }
+
+        private void ApplyProfileBackdrop(BitmapImage? bannerPreview, BitmapImage? avatarPreview)
+        {
+            // banner varsa onu goster yoksa avatar glow kullan
+            imgProfileBanner.Source = bannerPreview;
+            imgProfileBanner.Visibility = bannerPreview == null ? Visibility.Collapsed : Visibility.Visible;
+
+            imgProfileHeroGlow.Source = bannerPreview == null ? avatarPreview : null;
+            imgProfileHeroGlow.Visibility = bannerPreview == null && avatarPreview != null
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        private void EnterProfileEditMode(bool isEditMode)
+        {
+            // profil alanini ayni sayfada duzenlenebilir yap
+            _isProfileEditMode = isEditMode;
+            btnProfilePageEdit.Visibility = isEditMode ? Visibility.Collapsed : Visibility.Visible;
+            btnProfilePageSave.Visibility = isEditMode ? Visibility.Visible : Visibility.Collapsed;
+            btnProfilePageCancel.Visibility = isEditMode ? Visibility.Visible : Visibility.Collapsed;
+            btnProfileSelectAvatar.Visibility = isEditMode ? Visibility.Visible : Visibility.Collapsed;
+            btnProfileSelectBanner.Visibility = isEditMode ? Visibility.Visible : Visibility.Collapsed;
+            txtProfilePageBio.Visibility = isEditMode ? Visibility.Collapsed : Visibility.Visible;
+            txtProfilePageBioEdit.Visibility = isEditMode ? Visibility.Visible : Visibility.Collapsed;
+
+            if (!isEditMode)
+            {
+                _pendingAvatarSourcePath = string.Empty;
+                _pendingBannerSourcePath = string.Empty;
+            }
+
+            RefreshProfilePage();
+        }
+
+        private void ProfilePageEditButton_Click(object sender, RoutedEventArgs e)
+        {
+            // profil duzenleme moduna gec
+            EnterProfileEditMode(true);
+        }
+
+        private void ProfilePageCancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            // kaydedilmeyen degisikligi geri al
+            EnterProfileEditMode(false);
+        }
+
+        private void ProfilePageSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            // profil degisikligini kaydet
+            if (UserSession.IsGuest)
+            {
+                return;
+            }
+
+            try
+            {
+                // bio avatar ve banner bilgisini birlikte kaydet
+                _profileSummary = _profileController.SaveProfile(
+                    UserSession.UserId,
+                    txtProfilePageBioEdit.Text,
+                    _pendingAvatarSourcePath,
+                    _pendingBannerSourcePath);
+
+                // oturumdaki profil ozetini de tazele
+                UserSession.UpdateProfile(
+                    _profileSummary.ProfileImagePath,
+                    _profileSummary.BannerImagePath,
+                    _profileSummary.Bio);
+
+                // profil ve istek listesi ekranlarini guncelle
+                _profileRecentPlays = _profileController.GetRecentPlays(UserSession.UserId).ToList();
+                _wishlistItems = _wishlistController.GetWishlistItems(UserSession.UserId).ToList();
+                _wishlistGameIds = _wishlistController.GetWishlistGameIds(UserSession.UserId);
+
+                ConfigureProfileArea();
+                EnterProfileEditMode(false);
+                RefreshWishlistPage();
+                CustomError.ShowDialog("Profil güncellendi.", "Bilgi", owner: this);
+            }
+            catch (Exception ex)
+            {
+                CustomError.ShowDialog($"Profil kaydedilemedi: {ex.Message}", "Sistem Hatası", owner: this);
+            }
+        }
+
+        private void ProfileSelectAvatarButton_Click(object sender, RoutedEventArgs e)
+        {
+            // avatar gorselini dosyadan al
+            string selectedPath = SelectProfileMediaPath();
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            _pendingAvatarSourcePath = selectedPath;
+            BitmapImage? preview = GameAssetManager.LoadBitmap(selectedPath);
+            ApplyProfileImagePreview(
+                imgProfileAvatarPage,
+                txtProfileAvatarInitial,
+                preview,
+                UserSession.GetAvatarLetter());
+            BitmapImage? bannerPreview = !string.IsNullOrWhiteSpace(_pendingBannerSourcePath)
+                ? GameAssetManager.LoadBitmap(_pendingBannerSourcePath)
+                : _profileSummary?.BannerPreview;
+            ApplyProfileBackdrop(bannerPreview, preview);
+        }
+
+        private void ProfileSelectBannerButton_Click(object sender, RoutedEventArgs e)
+        {
+            // banner gorselini dosyadan al
+            string selectedPath = SelectProfileMediaPath();
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            _pendingBannerSourcePath = selectedPath;
+            BitmapImage? preview = GameAssetManager.LoadBitmap(selectedPath);
+            BitmapImage? avatarPreview = !string.IsNullOrWhiteSpace(_pendingAvatarSourcePath)
+                ? GameAssetManager.LoadBitmap(_pendingAvatarSourcePath)
+                : _profileSummary?.AvatarPreview;
+            ApplyProfileBackdrop(preview, avatarPreview);
+        }
+
+        private string SelectProfileMediaPath()
+        {
+            // profil medyasi icin dosya sec
+            OpenFileDialog dialog = new()
+            {
+                Title = "Görsel Seç",
+                Filter = "Görsel Dosyaları|*.png;*.jpg;*.jpeg;*.webp",
+                Multiselect = false
+            };
+
+            return dialog.ShowDialog(this) == true ? dialog.FileName : string.Empty;
+        }
+
+        private void WishlistRemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            // istek listesindeki tek oyunu kaldir
+            if (sender is not Button button || button.Tag == null || UserSession.IsGuest)
+            {
+                return;
+            }
+
+            if (!int.TryParse(button.Tag.ToString(), out int gameId))
+            {
+                return;
+            }
+
+            // listeyi ve detay durumunu ayni anda yenile
+            _wishlistController.RemoveFromWishlist(UserSession.UserId, gameId);
+            RefreshCommerceState(false);
+            ApplyDetailOwnershipState();
+        }
+
+        private void RecentPlayButton_Click(object sender, RoutedEventArgs e)
+        {
+            // son oynanan kartindan sahip olunan oyuna git
+            OpenOwnedGameFromTag(sender);
+        }
+
+        private void OpenOwnedGameFromTag(object sender)
+        {
+            // sahip olunan oyunu kurulum ekraninda ac
+            if (sender is not Button button || button.Tag == null)
+            {
+                return;
+            }
+
+            if (!int.TryParse(button.Tag.ToString(), out int gameId))
+            {
+                return;
+            }
+
+            try
+            {
+                StoreGameDetail detail = _storeController.GetGameDetail(gameId);
+                _isLibraryViewActive = true;
+                _isDownloadsViewActive = false;
+                ShowInstallView(detail);
+            }
+            catch (Exception ex)
+            {
+                CustomError.ShowDialog($"Oyun sayfası açılamadı: {ex.Message}", "Sistem Hatası", owner: this);
             }
         }
 
@@ -3065,7 +3577,7 @@ namespace VOID_STORE.Views
             popCartMenu.IsOpen = false;
 
             // net yönlendirme göster
-            CustomError.ShowDialog("Bu işlem için giriş yapmanız gerekiyor", "BILGI", owner: this);
+            CustomError.ShowDialog("Bu işlem için giriş yapmanız gerekiyor.", "Bilgi", owner: this);
             return false;
         }
 
@@ -3106,7 +3618,7 @@ namespace VOID_STORE.Views
             // sayı ve pozitiflik kontrolü yap
             if (!int.TryParse(rawValue, out int amount) || amount <= 0)
             {
-                CustomError.ShowDialog("Geçerli bir bakiye tutarı girin", "BILGI", owner: this);
+                CustomError.ShowDialog("Geçerli bir bakiye tutarı girin.", "Bilgi", owner: this);
                 return;
             }
 
@@ -3125,7 +3637,7 @@ namespace VOID_STORE.Views
             string paymentTitle = GetSelectedPaymentTitle();
 
             // kullanıcıdan son onayı al
-            if (!CustomConfirm.ShowDialog("Bakiye Yükle", $"{FormatMoney(amount)} seçili kart ile yüklensin mi", "Yükle", this))
+            if (!CustomConfirm.ShowDialog("Bakiye Yükle", $"{FormatMoney(amount)} seçili kart ile yüklensin mi?", "Yükle", this))
             {
                 return;
             }
@@ -3144,12 +3656,12 @@ namespace VOID_STORE.Views
                 ShowWalletView();
 
                 // sonuç bilgisini göster
-                CustomError.ShowDialog($"{paymentTitle} ile bakiye güncellendi", "BILGI", owner: this);
+                CustomError.ShowDialog($"{paymentTitle} ile bakiye güncellendi.", "Bilgi", owner: this);
             }
             catch (Exception ex)
             {
                 // hata mesajını ekrana taşı
-                CustomError.ShowDialog($"Bakiye yüklenemedi {ex.Message}", "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog($"Bakiye yüklenemedi: {ex.Message}", "Sistem Hatası", owner: this);
             }
         }
 
@@ -3193,14 +3705,14 @@ namespace VOID_STORE.Views
             // boş sepette ilerleme
             if (_cartItems.Count == 0)
             {
-                CustomError.ShowDialog("Sepette satın alınacak oyun bulunmuyor", "BILGI", owner: this);
+                CustomError.ShowDialog("Sepette satın alınacak oyun bulunmuyor.", "Bilgi", owner: this);
                 return;
             }
 
             decimal totalAmount = _cartItems.Sum(item => item.PriceAmount);
 
             // son onayı kullanıcıdan al
-            if (!CustomConfirm.ShowDialog("Satın Al", $"{_cartItems.Count} oyunu {FormatMoney(totalAmount)} karşılığında satın almak istiyor musun", "Satın Al", this))
+            if (!CustomConfirm.ShowDialog("Satın Al", $"{_cartItems.Count} oyunu {FormatMoney(totalAmount)} karşılığında satın almak istiyor musun?", "Satın Al", this))
             {
                 return;
             }
@@ -3217,12 +3729,12 @@ namespace VOID_STORE.Views
 
                 // satın alma sonrası kütüphaneye git
                 ShowLibraryView();
-                CustomError.ShowDialog($"{result.ItemCount} oyun kütüphanene eklendi", "BILGI", owner: this);
+                CustomError.ShowDialog($"{result.ItemCount} oyun kütüphanene eklendi.", "Bilgi", owner: this);
             }
             catch (Exception ex)
             {
                 // checkout hatasını göster
-                CustomError.ShowDialog($"Satın alma tamamlanamadı {ex.Message}", "SISTEM HATASI", owner: this);
+                CustomError.ShowDialog($"Satın alma tamamlanamadı: {ex.Message}", "Sistem Hatası", owner: this);
             }
         }
 

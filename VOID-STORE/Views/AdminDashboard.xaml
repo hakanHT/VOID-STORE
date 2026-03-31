@@ -1,4 +1,4 @@
-<Window x:Class="VOID_STORE.Views.AdminDashboard"
+﻿<Window x:Class="VOID_STORE.Views.AdminDashboard"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -340,7 +340,7 @@
                                        FontSize="34"
                                        FontWeight="Bold"
                                        Margin="0,8,0,0"/>
-                            <TextBlock Text="Oyun ekleme, güncelleme ve yönetim işlemlerini buradan gerçekleştirebilirsiniz."
+                            <TextBlock Text="Oyun ekleme güncelleme ve yönetim işlemlerini buradan gerçekleştirebilirsiniz"
                                        Foreground="#A2ACB9"
                                        FontSize="13"
                                        Margin="0,8,0,0"/>
@@ -398,7 +398,6 @@
                                     Padding="8"
                                     MinWidth="206">
                                 <StackPanel>
-                                    <Button Content="Profil Düzenle" Style="{StaticResource ProfileMenuButton}" Click="ProfileEditButton_Click"/>
                                     <Button Content="Mağazaya Dön" Style="{StaticResource ProfileMenuButton}" Click="StoreButton_Click"/>
                                     <Border Height="1" Background="#18212B" Margin="8,6"/>
                                     <Button Content="Çıkış Yap" Style="{StaticResource ProfileMenuButton}" Click="LogoutButton_Click"/>
@@ -426,7 +425,7 @@
                                            FontSize="26"
                                            FontWeight="Bold"
                                            Margin="0,12,0,0"/>
-                                <TextBlock Text="Sistemdeki tüm oyunları görüntüleyebilir, düzenleyebilir ve durumlarını kontrol edebilirsiniz."
+                                <TextBlock Text="Sistemdeki tüm oyunları görüntüleyebilir düzenleyebilir ve durumlarını kontrol edebilirsiniz"
                                            Foreground="#95A0AE"
                                            FontSize="13"
                                            Margin="0,10,0,0"
@@ -589,3 +588,4 @@
         </Grid>
     </Border>
 </Window>
+

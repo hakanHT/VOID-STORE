@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Input;
 using VOID_STORE.Models;
@@ -122,12 +122,6 @@ namespace VOID_STORE.Views
             Close();
         }
 
-        private void GamesSectionButton_Click(object sender, RoutedEventArgs e)
-        {
-            // hazir olmayan alani bildir
-            CustomError.ShowDialog("Oyun yönetimi ekranı bir sonraki adımda hazırlanacak.", "BİLGİ");
-        }
-
         private void OpenCreateViewButton_Click(object sender, RoutedEventArgs e)
         {
             // oyun ekleme ekranini ac
@@ -203,13 +197,6 @@ namespace VOID_STORE.Views
             }
         }
 
-        private void ProfileEditButton_Click(object sender, RoutedEventArgs e)
-        {
-            // profil duzenleme alani hazir degil
-            ProfileMenuToggle.IsChecked = false;
-            CustomError.ShowDialog("Profil düzenleme alanı bir sonraki adımda hazırlanacak.", "BİLGİ");
-        }
-
         private void ToggleWindowState()
         {
             // pencere boyutunu buyut ya da geri al
@@ -219,3 +206,6 @@ namespace VOID_STORE.Views
         }
     }
 }
+
+
+
