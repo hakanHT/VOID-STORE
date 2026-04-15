@@ -1,4 +1,4 @@
-﻿<Window x:Class="VOID_STORE.Views.MainAppWindow"
+<Window x:Class="VOID_STORE.Views.MainAppWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -107,7 +107,7 @@
                                             ViewboxUnits="RelativeToBoundingBox"/>
                             </Border.Background>
                         </Border>
-                        <StackPanel Grid.Row="1" VerticalAlignment="Top" Margin="0,34,0,0">
+                        <StackPanel Grid.Row="1" VerticalAlignment="Top" Margin="0,74,0,0">
                             <Button x:Name="btnStoreNav" Style="{StaticResource SidebarButton}" Click="StoreNavButton_Click" MouseEnter="SidebarButton_MouseEnter" MouseLeave="SidebarButton_MouseLeave">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="&#xE719;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center"/>
@@ -204,7 +204,7 @@
                             </Grid>
                             <ScrollViewer x:Name="StoreGamesScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" SizeChanged="StoreGamesScrollViewer_SizeChanged">
                                 <Grid>
-                                    <ItemsControl x:Name="icStoreGames" HorizontalAlignment="Center">
+                                    <ItemsControl x:Name="icStoreGames" HorizontalAlignment="Left">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <WrapPanel/>
