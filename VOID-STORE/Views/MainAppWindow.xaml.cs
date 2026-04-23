@@ -897,13 +897,13 @@ namespace VOID_STORE.Views
                 return;
             }
 
-            // kaç tane kart sığacağını hesapla (kart genişliği 238 + marginler 16 = 254)
+            // kac tane kart sigacagini hesapla (kart genisligi 238 + marginler 16 = 254)
             int columns = (int)(viewportWidth / 254);
             if (columns <= 0) columns = 1;
 
-            // Sütun sayısını Tag üzerinden UniformGrid'e bildir
+            // Sutun sayisini Tag uzerinden UniformGrid'e bildir
             icStoreGames.Tag = columns.ToString();
-            icStoreGames.Width = double.NaN; // Genişlik artık tüm alanı kaplayacak şekilde serbest
+            icStoreGames.Width = double.NaN; // Genislik artik tum alani kaplayacak sekilde serbest
         }
 
         private void ShowDetailView(StoreGameDetail detail)
@@ -1826,7 +1826,7 @@ namespace VOID_STORE.Views
 
         private void Logo_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            // logoya tıklandığında mağazaya dön
+            // logoya tiklandiginda magazaya don
             ShowStoreView();
         }
 
@@ -2978,25 +2978,25 @@ namespace VOID_STORE.Views
                 return;
             }
 
-            // veri yoksa paneli serbest bırak
+            // veri yoksa paneli serbest birak
             if (icLibraryGames.Items.Count == 0)
             {
                 icLibraryGames.Width = double.NaN;
                 return;
             }
 
-            // kaç tane kart sığacağını hesapla (kart genişliği 238 + marginler 16 = 254)
+            // kac tane kart sigacagini hesapla (kart genisligi 238 + marginler 16 = 254)
             int columns = (int)(viewportWidth / 254);
             if (columns <= 0) columns = 1;
 
-            // Sütun sayısını Tag üzerinden UniformGrid'e bildir
+            // Sutun sayisini Tag uzerinden UniformGrid'e bildir
             icLibraryGames.Tag = columns.ToString();
-            icLibraryGames.Width = double.NaN; // Genişlik artık tüm alanı kaplayacak şekilde serbest
+            icLibraryGames.Width = double.NaN; // Genislik artik tum alani kaplayacak sekilde serbest
         }
 
         private void ShowLibraryView()
         {
-            // kütüphane ekranına geç
+            // kutuphane ekranina gec
             StopTrailer();
             popCartMenu.IsOpen = false;
             _isLibraryViewActive = true;
