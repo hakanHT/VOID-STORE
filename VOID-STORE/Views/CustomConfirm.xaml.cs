@@ -9,7 +9,8 @@ namespace VOID_STORE.Views
         {
             InitializeComponent();
 
-            txtTitle.Text = title?.Trim() ?? "ONAY";
+            // Başlığı olduğu gibi göster
+            txtTitle.Text = title?.Trim() ?? "Onay";
             txtMessage.Text = message;
             btnConfirm.Content = confirmText;
         }

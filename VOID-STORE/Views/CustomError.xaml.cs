@@ -10,13 +10,14 @@ namespace VOID_STORE.Views
         {
             InitializeComponent();
 
-            txtTitle.Text = title?.Trim() ?? "BİLGİ";
+            // Başlığı olduğu gibi göster
+            txtTitle.Text = title?.Trim() ?? "Bilgi";
             txtMessage.Text = message;
 
             if (isSuccess)
             {
-                // Sadece başarılı işlemlerde yeşil buton
-                Brush successBrush = new SolidColorBrush(Color.FromRgb(0x00, 0xAA, 0x00));
+                // Başarılı işlemleri canlı yeşil ile göster
+                Brush successBrush = new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0x00));
                 txtTitle.Foreground = successBrush;
                 btnOk.Background = successBrush;
                 btnOk.BorderBrush = successBrush;
@@ -24,15 +25,15 @@ namespace VOID_STORE.Views
             }
             else if (string.Equals(txtTitle.Text, "Bilgi", System.StringComparison.OrdinalIgnoreCase))
             {
-                // Bilgi/Uyarı mesajlarında beyaz buton
+                // Bilgi/Misafir uyarıları için beyaz buton ve koyu metin
                 btnOk.Background = Brushes.White;
                 btnOk.BorderBrush = Brushes.White;
-                btnOk.Foreground = (Brush)new BrushConverter().ConvertFromString("#09090B")!;
+                btnOk.Foreground = new SolidColorBrush(Color.FromRgb(0x0A, 0x0A, 0x0C));
                 txtTitle.Foreground = Brushes.White;
             }
             else
             {
-                // Hata durumlarında kırmızı buton
+                // Hata durumlarında kırmızı buton (varsayılan)
                 Brush errorBrush = new SolidColorBrush(Color.FromRgb(0xE8, 0x11, 0x23));
                 txtTitle.Foreground = errorBrush;
                 btnOk.Background = errorBrush;
@@ -61,7 +62,7 @@ namespace VOID_STORE.Views
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-        // basliktan pencereyi tasi
+            // Başlıktan pencereyi taşı
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
@@ -70,13 +71,13 @@ namespace VOID_STORE.Views
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-        // pencereyi kapat
+            // Pencereyi kapat
             Close();
         }
 
         private static Window? GetActiveWindow()
         {
-        // etkin pencereyi bul
+            // Etkin pencereyi bul
             if (Application.Current == null)
             {
                 return null;
