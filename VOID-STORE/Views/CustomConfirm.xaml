@@ -25,12 +25,11 @@
                            FontSize="12"
                            Margin="16,0,0,0"
                            VerticalAlignment="Center"/>
-                <Button Width="34"
+                <Button Width="42"
                         Height="34"
                         HorizontalAlignment="Right"
                         Background="Transparent"
                         BorderThickness="0"
-                        Foreground="White"
                         Cursor="Hand"
                         Click="CancelButton_Click">
                     <Button.Style>
@@ -38,7 +37,7 @@
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="Button">
-                                        <Border x:Name="Surface" Background="Transparent">
+                                        <Border x:Name="Surface" Background="Transparent" CornerRadius="0,8,0,0">
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                         <ControlTemplate.Triggers>
@@ -51,7 +50,7 @@
                             </Setter>
                         </Style>
                     </Button.Style>
-                    <TextBlock Text="✕" FontSize="12"/>
+                    <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="White"/>
                 </Button>
             </Grid>
 

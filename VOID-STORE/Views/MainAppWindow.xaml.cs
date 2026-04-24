@@ -2377,11 +2377,6 @@ namespace VOID_STORE.Views
                 ? "Giriş yapman gerekiyor"
                 : FormatMoney(UserSession.Balance);
 
-            // cüzdan açıklama satırını sade tut
-            txtWalletPageInfo.Text = UserSession.IsGuest
-                ? "Cüzdan ve ödeme yöntemleri girişten sonra aktif olur"
-                : "Bakiye yükleme ve işlem geçmişi burada görünür";
-
             // hareket geçmişini listele
             icWalletTransactions.ItemsSource = null;
             icWalletTransactions.ItemsSource = _walletTransactions;
@@ -3929,24 +3924,39 @@ namespace VOID_STORE.Views
             ApplyPaymentMethodSelection();
         }
 
+        private void AddCardSimulated_Click(object sender, RoutedEventArgs e)
+        {
+            // simüle edilmiş kart ekleme - modern ve açıklayıcı bildirim
+            CustomError.ShowDialog("Uygulama geliştirme aşamasında olduğundan gerçek ödeme yöntemleri kullanılamamaktadır. Bakiye sistemi şu anda simülasyon aşamasındadır.", "Bilgi", owner: this);
+        }
+
         private void ApplyPaymentMethodSelection()
         {
-            // buton vurgularını seçime göre güncelle
-            ApplyPaymentButtonStyle(btnPaymentVisa, _selectedPaymentMethod == "visa", "#2C66F5");
-            ApplyPaymentButtonStyle(btnPaymentMaster, _selectedPaymentMethod == "mastercard", "#FF7043");
-            ApplyPaymentButtonStyle(btnPaymentTroy, _selectedPaymentMethod == "troy", "#1DBB73");
+            // buton vurgularını seçime göre monokrom güncelle (Beyaz/Gri asalet)
+            ApplyPaymentButtonStyle(btnPaymentVisa, _selectedPaymentMethod == "visa", "#FFFFFF");
+            ApplyPaymentButtonStyle(btnPaymentMaster, _selectedPaymentMethod == "mastercard", "#FFFFFF");
 
-            // seçili kart özetini yaz
-            txtSelectedPaymentTitle.Text = GetSelectedPaymentTitle();
+            // XAML tetikleyicileri için Tag'leri ayarla
+            btnPaymentVisa.Tag = _selectedPaymentMethod == "visa" ? "active" : "visa";
+            btnPaymentMaster.Tag = _selectedPaymentMethod == "mastercard" ? "active" : "mastercard";
+
+            // seçili kart detaylarını yaz
             txtSelectedPaymentNumber.Text = GetSelectedPaymentNumber();
             txtSelectedPaymentExpiry.Text = GetSelectedPaymentExpiry();
+            
+            // Logoyu güncelle (FindName ile derleme hatasını baypas et)
+            if (this.FindName("txtWalletCardBrandLogo") is TextBlock logoText)
+            {
+                logoText.Text = _selectedPaymentMethod == "mastercard" ? "MASTERCARD" : "VISA";
+            }
         }
 
         private void ApplyPaymentButtonStyle(Button button, bool isSelected, string accentColor)
         {
-            // seçili kartta daha belirgin kenarlık kullan
-            button.Background = isSelected ? CreateBrush("#151519") : CreateBrush("#101014");
-            button.BorderBrush = isSelected ? CreateBrush(accentColor) : CreateBrush("#1E1E24");
+            // keskin seçim vurgusu: seçili kartta kalın beyaz çerçeve
+            button.Background = isSelected ? CreateBrush("#151515") : CreateBrush("#0A0A0A");
+            button.BorderBrush = isSelected ? CreateBrush("#FFFFFF") : CreateBrush("#33FFFFFF");
+            button.BorderThickness = isSelected ? new Thickness(2) : new Thickness(1);
         }
 
         private string GetSelectedPaymentTitle()
@@ -3955,7 +3965,6 @@ namespace VOID_STORE.Views
             return _selectedPaymentMethod switch
             {
                 "mastercard" => "MasterCard",
-                "troy" => "Troy",
                 _ => "Visa"
             };
         }
@@ -3966,19 +3975,17 @@ namespace VOID_STORE.Views
             return _selectedPaymentMethod switch
             {
                 "mastercard" => "**** **** **** 5454",
-                "troy" => "**** **** **** 9792",
                 _ => "**** **** **** 4242"
             };
         }
 
         private string GetSelectedPaymentExpiry()
         {
-            // son kullanma özetini tek noktadan ver
+            // son kullanma tarihini kart üzerindeki gibi döner
             return _selectedPaymentMethod switch
             {
-                "mastercard" => "Son Kullanma 09 31",
-                "troy" => "Son Kullanma 05 32",
-                _ => "Son Kullanma 12 30"
+                "mastercard" => "09/31",
+                _ => "12/30"
             };
         }
 
