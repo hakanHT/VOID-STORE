@@ -23,20 +23,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Surface" Background="Transparent" CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="#151519"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Surface" Background="Transparent" CornerRadius="0" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><ScaleTransform ScaleX="1" ScaleY="1"/></Border.RenderTransform><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="#151519"/><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.1" Duration="0:0:0.1"/><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.1" Duration="0:0:0.1"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.1"/><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.1"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
         </Style>
 
         <Style x:Key="GhostButton" TargetType="Button">
@@ -49,18 +36,7 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="0">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="0" RenderTransformOrigin="0.5,0.5"><Border.RenderTransform><ScaleTransform ScaleX="1" ScaleY="1"/></Border.RenderTransform><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.02" Duration="0:0:0.1"/><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.02" Duration="0:0:0.1"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.1"/><DoubleAnimation Storyboard.TargetName="Surface" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.1"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#17171B"/>
@@ -408,6 +384,7 @@
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Oyun Adı" Style="{StaticResource InputLabel}"/>
                                         <TextBox x:Name="txtTitle" Style="{StaticResource InputTextBox}"/>
+                                        <TextBlock x:Name="txtTitleError" Text="* Oyun adı boş bırakılamaz" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Fiyat" Style="{StaticResource InputLabel}"/>
@@ -422,6 +399,7 @@
                                                      Style="{StaticResource InputTextBox}"
                                                      PreviewTextInput="PriceTextBox_PreviewTextInput"
                                                      LostFocus="PriceTextBox_LostFocus"/>
+                                            <TextBlock x:Name="txtPriceError" Text="* Geçerli bir fiyat girin" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed" Grid.Row="1" Grid.ColumnSpan="3"/>
 
                                             <Border Grid.Column="2" Style="{StaticResource InputSuffixBorder}">
                                                 <TextBlock Text="&#x20BA;"
@@ -447,6 +425,7 @@
                                             </ItemsPanelTemplate>
                                         </ListBox.ItemsPanel>
                                     </ListBox>
+                                    <TextBlock x:Name="txtCategoryError" Text="* Lütfen bir kategori seçin" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                 </StackPanel>
 
                                 <Grid Margin="0,0,0,18">
@@ -458,10 +437,12 @@
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Yapımcı" Style="{StaticResource InputLabel}"/>
                                         <TextBox x:Name="txtDeveloper" Style="{StaticResource InputTextBox}"/>
+                                        <TextBlock x:Name="txtDeveloperError" Text="* Yapımcı adı gerekli" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Yayıncı" Style="{StaticResource InputLabel}"/>
                                         <TextBox x:Name="txtPublisher" Style="{StaticResource InputTextBox}"/>
+                                        <TextBlock x:Name="txtPublisherError" Text="* Yayıncı adı gerekli" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                     </StackPanel>
                                 </Grid>
 

@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using VOID_STORE.Controllers;
 using VOID_STORE.Models;
 
@@ -122,6 +123,12 @@ namespace VOID_STORE.Views
                 _selectedItem = selectedItem;
                 GameManageDetail detail = _adminGameController.GetManagementDetail(selectedItem);
                 ApplyDetail(detail);
+
+                // Animasyonu tetikle
+                if (Resources["FadeInAnimation"] is Storyboard sb)
+                {
+                    DetailScroll.BeginStoryboard(sb);
+                }
             }
             catch (Exception ex)
             {
@@ -299,18 +306,15 @@ namespace VOID_STORE.Views
                 selectedItem = _items.FirstOrDefault(item => item.GameId == preserveGameId);
             }
 
-            if (selectedItem == null && _items.Count > 0)
-            {
-                selectedItem = _items[0];
-            }
-
             lstGames.SelectedItem = selectedItem;
+
+            // Empty State kontrolü
+            EmptyStateOverlay.Visibility = _items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
             if (_items.Count == 0)
             {
                 ShowPlaceholder("Bu bölümde görüntülenecek kayıt bulunmuyor.");
             }
-            else if (selectedItem == null)
             {
                 ShowPlaceholder("Soldan bir kayıt seçin.");
             }

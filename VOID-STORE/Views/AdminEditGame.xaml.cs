@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using Microsoft.Win32;
 using VOID_STORE.Controllers;
 using VOID_STORE.Models;
@@ -110,6 +111,12 @@ namespace VOID_STORE.Views
                 _selectedGameId = selectedItem.GameId;
                 ApplyState(state);
                 ShowEditor(true);
+
+                // Animasyonu tetikle
+                if (Resources["FadeInAnimation"] is Storyboard sb)
+                {
+                    EditorScroll.BeginStoryboard(sb);
+                }
             }
             catch (Exception ex)
             {
@@ -246,6 +253,11 @@ namespace VOID_STORE.Views
         {
         // yeni surumu onaya gonder
             if (_selectedGameId == 0)
+            {
+                return;
+            }
+
+            if (!ValidateForm())
             {
                 return;
             }
@@ -434,6 +446,75 @@ namespace VOID_STORE.Views
             UpdateCoverPreview();
             UpdateTrailerState();
             UpdateGalleryState();
+
+            // Hataları temizle
+            txtTitleError.Visibility = Visibility.Collapsed;
+            txtPriceError.Visibility = Visibility.Collapsed;
+            txtDeveloperError.Visibility = Visibility.Collapsed;
+            txtPublisherError.Visibility = Visibility.Collapsed;
+            txtCategoryError.Visibility = Visibility.Collapsed;
+        }
+
+        private bool ValidateForm()
+        {
+            bool isValid = true;
+
+            if (string.IsNullOrWhiteSpace(txtTitle.Text))
+            {
+                txtTitleError.Visibility = Visibility.Visible;
+                isValid = false;
+            }
+            else
+            {
+                txtTitleError.Visibility = Visibility.Collapsed;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtPrice.Text))
+            {
+                txtPriceError.Visibility = Visibility.Visible;
+                isValid = false;
+            }
+            else
+            {
+                txtPriceError.Visibility = Visibility.Collapsed;
+            }
+
+            if (lstCategory.SelectedItem == null)
+            {
+                txtCategoryError.Visibility = Visibility.Visible;
+                isValid = false;
+            }
+            else
+            {
+                txtCategoryError.Visibility = Visibility.Collapsed;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtDeveloper.Text))
+            {
+                txtDeveloperError.Visibility = Visibility.Visible;
+                isValid = false;
+            }
+            else
+            {
+                txtDeveloperError.Visibility = Visibility.Collapsed;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtPublisher.Text))
+            {
+                txtPublisherError.Visibility = Visibility.Visible;
+                isValid = false;
+            }
+            else
+            {
+                txtPublisherError.Visibility = Visibility.Collapsed;
+            }
+
+            if (!isValid)
+            {
+                CustomError.ShowDialog("Lütfen zorunlu alanları doldurun.", "DOĞRULAMA HATASI");
+            }
+
+            return isValid;
         }
 
         private void UpdateCoverPreview()
