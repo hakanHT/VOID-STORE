@@ -98,6 +98,66 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid KeyboardNavigation.TabNavigation="Local">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TabPanel Grid.Row="0" IsItemsHost="True" Margin="0,0,0,20"/>
+                            <Border Grid.Row="1" Background="Transparent">
+                                <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="#0D0D10"/>
+            <Setter Property="Foreground" Value="#8F98A5"/>
+            <Setter Property="BorderBrush" Value="#1D1D22"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="MinWidth" Value="150"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Margin="0" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="Content" ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#141418"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#2B2B32"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#FFFFFF"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#FFFFFF"/>
+                                <Setter Property="Foreground" Value="#0A0A0C"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.3"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="Valid">
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#2ECC71"/>
+                                <Setter TargetName="Surface" Property="Background" Value="#0A2215"/>
+                                <Setter Property="Foreground" Value="#2ECC71"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Storyboard x:Key="FadeInAnimation">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3"/>
         </Storyboard>
@@ -170,54 +230,181 @@
                         </Grid>
                     </Border>
                     <Grid Grid.Column="2">
-                        <ScrollViewer x:Name="EditorScroll" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Opacity="0">
-                            <StackPanel>
-                                <Border Style="{StaticResource SectionCard}">
+                        <Grid x:Name="EditorScroll" Visibility="Collapsed" Opacity="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Editor Header -->
+                            <Border Grid.Row="0" Background="#0D0D10" BorderBrush="#1D1D22" BorderThickness="1" Padding="20,16" Margin="0,0,0,20">
+                                <DockPanel LastChildFill="False">
                                     <StackPanel>
-                                        <DockPanel LastChildFill="False"><TextBlock Text="Temel Bilgiler" Foreground="White" FontSize="22" FontWeight="SemiBold"/><Border Background="#182232" CornerRadius="0" Padding="10,6" Margin="12,0,0,0"><TextBlock x:Name="txtDraftStatus" Text="Yükleniyor" Foreground="#63A7FF" FontSize="11" FontWeight="SemiBold"/></Border></DockPanel>
-                                        <TextBlock x:Name="txtDraftHint" Text="Seçilen oyunun bilgileri burada gösterilir." Foreground="#8F98A5" FontSize="13" Margin="0,10,0,24"/>
-                                        <Grid Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="210"/></Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"><TextBlock Text="Oyun Adı" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtTitle" Style="{StaticResource InputTextBox}"/><TextBlock x:Name="txtTitleError" Text="* Oyun adı boş bırakılamaz" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/></StackPanel>
-                                            <StackPanel Grid.Column="2"><TextBlock Text="Fiyat" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="txtPrice" Style="{StaticResource InputTextBox}" PreviewTextInput="PriceTextBox_PreviewTextInput" LostFocus="PriceTextBox_LostFocus"/><Border Grid.Column="2" Background="#111114" BorderBrush="#1D1D22" BorderThickness="1" CornerRadius="0" Padding="16,0" Height="44"><TextBlock Text="&#x20BA;" Foreground="White" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Center"/></Border><TextBlock x:Name="txtPriceError" Grid.Row="1" Grid.ColumnSpan="3" Text="* Geçerli bir fiyat girin" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/></Grid></StackPanel>
-                                        </Grid>
-                                        <StackPanel Margin="0,0,0,18"><TextBlock Text="Kategori" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><ListBox x:Name="lstCategory" Style="{StaticResource CategoryListBox}" ItemContainerStyle="{StaticResource CategoryListItemStyle}" SelectionMode="Single"><ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel></ListBox><TextBlock x:Name="txtCategoryError" Text="* Lütfen bir kategori seçin" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/></StackPanel>
-                                        <Grid Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"><TextBlock Text="Yapımcı" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtDeveloper" Style="{StaticResource InputTextBox}"/><TextBlock x:Name="txtDeveloperError" Text="* Yapımcı adı gerekli" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/></StackPanel>
-                                            <StackPanel Grid.Column="2"><TextBlock Text="Yayıncı" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtPublisher" Style="{StaticResource InputTextBox}"/><TextBlock x:Name="txtPublisherError" Text="* Yayıncı adı gerekli" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/></StackPanel>
-                                        </Grid>
-                                        <StackPanel Margin="0,0,0,18"><TextBlock Text="Platformlar" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><WrapPanel><ToggleButton x:Name="tglWindows" Content="Windows" Style="{StaticResource PlatformToggleButton}"/><ToggleButton x:Name="tglMacOs" Content="macOS" Style="{StaticResource PlatformToggleButton}"/><ToggleButton x:Name="tglLinux" Content="Linux" Style="{StaticResource PlatformToggleButton}"/></WrapPanel></StackPanel>
-                                        <StackPanel Margin="0,0,0,18"><TextBlock Text="Oyun Özellikleri" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><ListBox x:Name="lstFeatures" Style="{StaticResource CategoryListBox}" ItemContainerStyle="{StaticResource CategoryListItemStyle}" SelectionMode="Multiple"><ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel></ListBox><TextBlock Text="İsterseniz bir veya daha fazla özellik seçin" Foreground="#7F8690" FontSize="11" Margin="0,8,0,0"/></StackPanel>
-                                        <Grid Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition Width="240"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"><TextBlock Text="Çıkış Tarihi" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtReleaseDate" Style="{StaticResource InputTextBox}" PreviewTextInput="ReleaseDateTextBox_PreviewTextInput"/><TextBlock Text="GG.AA.YYYY biçimini kullanın" Foreground="#7F8690" FontSize="11" Margin="0,8,0,0"/></StackPanel>
-                                            <StackPanel Grid.Column="2"><TextBlock Text="Oyun Fragmanı" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><Border Background="#101014" BorderBrush="#1D1D22" BorderThickness="1" CornerRadius="0" Padding="16,14"><TextBlock x:Name="txtTrailerStatus" Text="Fragman seçilmedi" Foreground="White" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/></Border><TextBlock Text="İsterseniz oyun fragmanı için video dosyası seçebilirsiniz" Foreground="#7F8690" FontSize="11" Margin="0,8,0,0"/></StackPanel>
-                                        </Grid>
-                                        <StackPanel><TextBlock Text="Açıklama" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtDescription" Style="{StaticResource InputTextBox}" Height="160" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/></StackPanel>
-                                        <Grid Margin="0,18,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0"><TextBlock Text="Minimum Sistem Gereksinimleri" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtMinimumRequirements" Style="{StaticResource InputTextBox}" Height="170" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/></StackPanel>
-                                            <StackPanel Grid.Column="2"><TextBlock Text="Önerilen Sistem Gereksinimleri" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtRecommendedRequirements" Style="{StaticResource InputTextBox}" Height="170" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/></StackPanel>
-                                        </Grid>
-                                        <StackPanel Margin="0,18,0,0"><TextBlock Text="Desteklenen Diller" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtSupportedLanguages" Style="{StaticResource InputTextBox}" Height="130" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/></StackPanel>
+                                        <TextBlock Text="Oyun Bilgilerini Düzenle" Foreground="White" FontSize="18" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="txtDraftHint" Text="Seçilen oyunun mevcut bilgilerini güncelleyin." Foreground="#8F98A5" FontSize="12" Margin="0,4,0,0"/>
                                     </StackPanel>
-                                </Border>
-                                <Border Style="{StaticResource SectionCard}" Margin="0,20,0,0">
-                                    <Grid>
-                                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="24"/><RowDefinition Height="Auto"/><RowDefinition Height="18"/><RowDefinition Height="Auto"/><RowDefinition Height="26"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                        <StackPanel><TextBlock Text="Medya Yönetimi" Foreground="White" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Kapak görseli ve galeri görselleri yeni sürüm için ayrı klasörde saklanır." Foreground="#8F98A5" FontSize="13" Margin="0,8,0,0"/></StackPanel>
-                                        <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="420"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <Border Background="#0D0D10" BorderBrush="#1D1D22" BorderThickness="1" CornerRadius="0" MinHeight="360" Padding="18"><Grid><Image x:Name="imgCoverPreview" Stretch="UniformToFill" Visibility="Collapsed"/><StackPanel x:Name="CoverPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center"><TextBlock Text="Kapak Görseli" Foreground="White" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center"/><TextBlock Text="Mevcut kapağı koruyabilir veya yeni bir kapak seçebilirsiniz" Foreground="#8F98A5" FontSize="13" Margin="0,10,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Width="260"/></StackPanel></Grid></Border>
-                                            <StackPanel Grid.Column="2">
-                                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Button Grid.Column="0" Content="Kapak Görselini Değiştir" Style="{StaticResource GhostButton}" Click="SelectCoverButton_Click"/><Button Grid.Column="2" Content="Yeni Görsel Ekle" Style="{StaticResource GhostButton}" Click="SelectGalleryButton_Click"/><Button Grid.Column="4" Content="Fragman Videosunu Seç" Style="{StaticResource GhostButton}" Click="SelectTrailerButton_Click"/><Button Grid.Column="6" Content="Seçili Görseli Kaldır" Style="{StaticResource GhostButton}" Click="RemoveGalleryButton_Click"/></Grid>
-                                                <Grid Margin="0,18,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Border Grid.Column="0" Background="#0D0D10" BorderBrush="#1D1D22" BorderThickness="1" CornerRadius="0" Padding="18"><StackPanel><TextBlock Text="Ana Görsel" Foreground="#8F98A5" FontSize="11"/><TextBlock x:Name="txtCoverStatus" Text="Henüz seçilmedi" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/></StackPanel></Border><Border Grid.Column="2" Background="#0D0D10" BorderBrush="#1D1D22" BorderThickness="1" CornerRadius="0" Padding="18"><StackPanel><TextBlock Text="Fragman" Foreground="#8F98A5" FontSize="11"/><TextBlock Text="{Binding ElementName=txtTrailerStatus, Path=Text}" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/><TextBlock Text="Bu alan opsiyoneldir" Foreground="#7F8690" FontSize="11" Margin="0,8,0,0"/></StackPanel></Border><Border Grid.Column="4" Background="#0D0D10" BorderBrush="#1D1D22" BorderThickness="1" CornerRadius="0" Padding="18"><StackPanel><TextBlock Text="Galeri Durumu" Foreground="#8F98A5" FontSize="11"/><TextBlock x:Name="txtGalleryStatus" Text="0 / 8 görsel seçildi" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"/><TextBlock Text="Son durumda 3 ile 8 görsel bulunmalıdır" Foreground="#7F8690" FontSize="11" Margin="0,8,0,0"/></StackPanel></Border></Grid>
-                                                <Border Background="#0D0D10" BorderBrush="#1D1D22" BorderThickness="1" CornerRadius="0" Padding="18" Margin="0,18,0,0"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="Galeri Görselleri" Foreground="White" FontSize="15" FontWeight="SemiBold"/><ListBox x:Name="lstGalleryFiles" Grid.Row="2" Background="Transparent" BorderThickness="0" Foreground="#D7DDE5" FontSize="13" Height="170"/></Grid></Border>
+                                    <Border DockPanel.Dock="Right" Background="#182232" CornerRadius="0" Padding="12,6" VerticalAlignment="Center">
+                                        <TextBlock x:Name="txtDraftStatus" Text="Yükleniyor" Foreground="#63A7FF" FontSize="11" FontWeight="SemiBold"/>
+                                    </Border>
+                                </DockPanel>
+                            </Border>
+
+                            <!-- Editor Content (Tabs) -->
+                            <TabControl x:Name="AdminTabControl" Grid.Row="1">
+                                <!-- Tab 1: Genel Bilgiler -->
+                                <TabItem x:Name="TabItemGenel" Header="GENEL BİLGİLER">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <Border Style="{StaticResource SectionCard}" Margin="0,0,12,0">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,20">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="Oyun Adı" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                        <TextBox x:Name="txtTitle" Style="{StaticResource InputTextBox}" TextChanged="Input_Changed"/>
+                                                        <TextBlock x:Name="txtTitleError" Text="* Oyun adı boş bırakılamaz" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="Fiyat" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                            <TextBox x:Name="txtPrice" Style="{StaticResource InputTextBox}" PreviewTextInput="PriceTextBox_PreviewTextInput" LostFocus="PriceTextBox_LostFocus" TextChanged="Input_Changed"/>
+                                                            <Border Grid.Column="2" Background="#111114" BorderBrush="#1D1D22" BorderThickness="1" Padding="12,0" Height="44"><TextBlock Text="&#x20BA;" Foreground="White" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/></Border>
+                                                        </Grid>
+                                                        <TextBlock x:Name="txtPriceError" Text="* Geçerli bir fiyat girin" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <StackPanel Margin="0,0,0,20">
+                                                    <TextBlock Text="Kategori" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                    <ListBox x:Name="lstCategory" Style="{StaticResource CategoryListBox}" ItemContainerStyle="{StaticResource CategoryListItemStyle}" SelectionMode="Single" SelectionChanged="Input_Changed"><ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel></ListBox>
+                                                    <TextBlock x:Name="txtCategoryError" Text="* Lütfen bir kategori seçin" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
+                                                </StackPanel>
+
+                                                <Grid Margin="0,0,0,20">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="Yapımcı" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                        <TextBox x:Name="txtDeveloper" Style="{StaticResource InputTextBox}" TextChanged="Input_Changed"/>
+                                                        <TextBlock x:Name="txtDeveloperError" Text="* Yapımcı adı gerekli" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="Yayıncı" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                        <TextBox x:Name="txtPublisher" Style="{StaticResource InputTextBox}" TextChanged="Input_Changed"/>
+                                                        <TextBlock x:Name="txtPublisherError" Text="* Yayıncı adı gerekli" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <StackPanel>
+                                                    <TextBlock Text="Açıklama" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                    <TextBox x:Name="txtDescription" Style="{StaticResource InputTextBox}" Height="240" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                                                </StackPanel>
                                             </StackPanel>
-                                        </Grid>
-                                        <Grid Grid.Row="6"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Button Grid.Column="0" Content="Geri Dön" Style="{StaticResource GhostButton}" Click="BackButton_Click"/><Button Grid.Column="2" Content="Değişiklikleri Geri Al" Style="{StaticResource GhostButton}" Click="ResetButton_Click"/><Button Grid.Column="4" Content="Taslağı Kaydet" Style="{StaticResource PrimaryButton}" Click="SaveButton_Click"/></Grid>
+                                        </Border>
+                                    </ScrollViewer>
+                                </TabItem>
+
+                                <!-- Tab 2: Medya Yönetimi -->
+                                <TabItem x:Name="TabItemMedya" Header="MEDYA YÖNETİMİ" IsEnabled="False">
+                                    <Grid Margin="0,0,12,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <Border Background="#0D0D10" BorderBrush="#1D1D22" BorderThickness="1" MinHeight="400" Padding="12">
+                                                <Grid>
+                                                    <Image x:Name="imgCoverPreview" Stretch="UniformToFill" Visibility="Collapsed"/>
+                                                    <StackPanel x:Name="CoverPlaceholder" VerticalAlignment="Center">
+                                                        <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" FontSize="42" Foreground="#1C1C22" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="Kapak Görseli" Foreground="White" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                            <Button Content="Kapağı Değiştir" Style="{StaticResource GhostButton}" Margin="0,12,0,0" Click="SelectCoverButton_Click"/>
+                                            <Border Background="#111115" Margin="0,12,0,0" Padding="12" BorderThickness="1" BorderBrush="#1C1C22">
+                                                <TextBlock x:Name="txtCoverStatus" Text="Mevcut Kapak" Foreground="#8F98A5" FontSize="11" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <Border Style="{StaticResource SectionCard}" Padding="20">
+                                                <StackPanel>
+                                                    <Grid Margin="0,0,0,16">
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                        <Button Grid.Column="0" Content="Yeni Görsel" Style="{StaticResource GhostButton}" Click="SelectGalleryButton_Click"/>
+                                                        <Button Grid.Column="2" Content="Fragman Seç" Style="{StaticResource GhostButton}" Click="SelectTrailerButton_Click"/>
+                                                        <Button Grid.Column="4" Content="Kaldır" Style="{StaticResource GhostButton}" Click="RemoveGalleryButton_Click"/>
+                                                    </Grid>
+
+                                                    <Grid Margin="0,0,0,16">
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                        <Border Grid.Column="0" Background="#0D0D10" Padding="12" BorderThickness="1" BorderBrush="#1C1C22">
+                                                            <StackPanel><TextBlock Text="Galeri" Foreground="#8F98A5" FontSize="11"/><TextBlock x:Name="txtGalleryStatus" Text="0 / 8" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel>
+                                                        </Border>
+                                                        <Border Grid.Column="2" Background="#0D0D10" Padding="12" BorderThickness="1" BorderBrush="#1C1C22">
+                                                            <StackPanel><TextBlock Text="Fragman" Foreground="#8F98A5" FontSize="11"/><TextBlock x:Name="txtTrailerStatus" Text="Seçilmedi" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
+                                                        </Border>
+                                                    </Grid>
+
+                                                    <TextBlock Text="Galeri Dosyaları" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                    <ListBox x:Name="lstGalleryFiles" Background="#0D0D10" BorderThickness="1" BorderBrush="#1C1C22" Height="180" Foreground="#D7DDE5" FontSize="12"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
                                     </Grid>
-                                </Border>
+                                </TabItem>
+
+                                <!-- Tab 3: Sistem & Platform -->
+                                <TabItem x:Name="TabItemSistem" Header="SİSTEM &amp; PLATFORM" IsEnabled="False">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel Margin="0,0,12,0">
+                                            <Border Style="{StaticResource SectionCard}">
+                                                <StackPanel>
+                                                    <Grid Margin="0,0,0,20">
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="Platformlar" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                            <WrapPanel><ToggleButton x:Name="tglWindows" Content="Windows" MinWidth="80" Margin="0,0,8,8" Style="{StaticResource PlatformToggleButton}"/><ToggleButton x:Name="tglMacOs" Content="macOS" MinWidth="80" Margin="0,0,8,8" Style="{StaticResource PlatformToggleButton}"/><ToggleButton x:Name="tglLinux" Content="Linux" MinWidth="80" Margin="0,0,8,8" Style="{StaticResource PlatformToggleButton}"/></WrapPanel>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="2">
+                                                            <TextBlock Text="Özellikler" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                            <ListBox x:Name="lstFeatures" Style="{StaticResource CategoryListBox}" ItemContainerStyle="{StaticResource CategoryListItemStyle}" SelectionMode="Multiple"><ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel></ListBox>
+                                                        </StackPanel>
+                                                    </Grid>
+
+                                                    <Grid Margin="0,0,0,20">
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0"><TextBlock Text="Çıkış Tarihi" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtReleaseDate" Style="{StaticResource InputTextBox}" PreviewTextInput="ReleaseDateTextBox_PreviewTextInput"/></StackPanel>
+                                                        <StackPanel Grid.Column="2"><TextBlock Text="Desteklenen Diller" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtSupportedLanguages" Style="{StaticResource InputTextBox}" Height="Auto" MinHeight="44" TextWrapping="Wrap" Padding="12,10"/></StackPanel>
+                                                    </Grid>
+
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0"><TextBlock Text="Minimum Gereksinimler" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtMinimumRequirements" Style="{StaticResource InputTextBox}" Height="200" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/></StackPanel>
+                                                        <StackPanel Grid.Column="2"><TextBlock Text="Önerilen Gereksinimler" Foreground="#D6D9DE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/><TextBox x:Name="txtRecommendedRequirements" Style="{StaticResource InputTextBox}" Height="200" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/></StackPanel>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </TabItem>
+                            </TabControl>
+
+                            <!-- Editor Footer -->
+                            <Border Grid.Row="2" Background="#0A0A0C" BorderBrush="#1D1D22" BorderThickness="0,1,0,0" Padding="0,20,0,0" Margin="0,12,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="12"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Content="Değişiklikleri Geri Al" Style="{StaticResource GhostButton}" Click="ResetButton_Click" HorizontalAlignment="Left" Width="180"/>
+                                    <Button Grid.Column="4" Content="Değişiklikleri Kaydet" Style="{StaticResource PrimaryButton}" Click="SaveButton_Click" Height="50" FontSize="14"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- Placeholder -->
+                        <Border x:Name="EditorPlaceholder" Background="#0F0F12" BorderBrush="#19191E" BorderThickness="1" Padding="36">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE739;" FontFamily="Segoe MDL2 Assets" FontSize="56" Foreground="#1C1C22" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Soldan bir oyun seçin" Foreground="White" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                                <TextBlock x:Name="txtPlaceholderHint" Text="Yayındaki bir oyunu seçtiğinizde düzenleme alanı burada açılır." Foreground="#8F98A5" FontSize="13" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center" Width="300" TextWrapping="Wrap"/>
                             </StackPanel>
-                        </ScrollViewer>
-                        <Border x:Name="EditorPlaceholder" Background="#0F0F12" BorderBrush="#19191E" BorderThickness="1" CornerRadius="0" Padding="36">
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"><TextBlock Text="Soldan bir oyun seçin" Foreground="White" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/><TextBlock x:Name="txtPlaceholderHint" Text="Yayındaki bir oyunu seçtiğinizde düzenleme alanı burada açılır." Foreground="#8F98A5" FontSize="13" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center"/></StackPanel>
                         </Border>
                     </Grid>
                 </Grid>

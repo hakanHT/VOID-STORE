@@ -151,6 +151,7 @@ namespace VOID_STORE.Views
 
             _selectedCoverPath = dialog.FileName;
             UpdateCoverPreview();
+            UpdateNavigationState();
         }
 
         private void SelectGalleryButton_Click(object sender, RoutedEventArgs e)
@@ -183,6 +184,7 @@ namespace VOID_STORE.Views
 
             _selectedGalleryPaths = mergedPaths;
             UpdateGalleryState();
+            UpdateNavigationState();
         }
 
         private void RemoveGalleryButton_Click(object sender, RoutedEventArgs e)
@@ -294,9 +296,35 @@ namespace VOID_STORE.Views
 
         private void PriceTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-        // fiyat girisini sinirla
+            // fiyat girisini sinirla
             string nextValue = GetNextText(txtPrice.Text, e.Text, txtPrice.SelectionStart, txtPrice.SelectionLength);
             e.Handled = !PriceInputRegex.IsMatch(nextValue);
+        }
+
+        private void Input_Changed(object sender, EventArgs e)
+        {
+            UpdateNavigationState();
+        }
+
+        private void UpdateNavigationState()
+        {
+            if (TabItemGenel == null || TabItemMedya == null || TabItemSistem == null) return;
+
+            // Step 1 Validation (Temel Bilgiler)
+            bool isStep1Valid = !string.IsNullOrWhiteSpace(txtTitle.Text) &&
+                               !string.IsNullOrWhiteSpace(txtPrice.Text) &&
+                               lstCategory.SelectedItem != null &&
+                               !string.IsNullOrWhiteSpace(txtDeveloper.Text) &&
+                               !string.IsNullOrWhiteSpace(txtPublisher.Text);
+
+            TabItemGenel.Tag = isStep1Valid ? "Valid" : null;
+            TabItemMedya.IsEnabled = isStep1Valid;
+
+            // Step 2 Validation (Medya - Kapak gorseli sart)
+            bool isStep2Valid = !string.IsNullOrWhiteSpace(_selectedCoverPath);
+
+            TabItemMedya.Tag = isStep2Valid ? "Valid" : null;
+            TabItemSistem.IsEnabled = isStep1Valid && isStep2Valid;
         }
 
         private void PriceTextBox_OnPaste(object sender, DataObjectPastingEventArgs e)
@@ -453,6 +481,7 @@ namespace VOID_STORE.Views
             txtDeveloperError.Visibility = Visibility.Collapsed;
             txtPublisherError.Visibility = Visibility.Collapsed;
             txtCategoryError.Visibility = Visibility.Collapsed;
+            UpdateNavigationState();
         }
 
         private bool ValidateForm()
