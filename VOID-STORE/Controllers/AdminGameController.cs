@@ -13,7 +13,7 @@ namespace VOID_STORE.Controllers
 {
     public class AdminGameController
     {
-        public const int MinGalleryImageCount = 3;
+        public const int MinGalleryImageCount = 5;
         public const int MaxGalleryImageCount = 8;
 
         private static readonly Regex PriceValidationRegex = new(@"^(?:0|[1-9]\d{0,3})(?:[.,]\d{1,2})?$");

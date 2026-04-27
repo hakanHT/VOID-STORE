@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Win32;
 using VOID_STORE.Controllers;
@@ -265,20 +266,153 @@ namespace VOID_STORE.Views
         {
             if (TabItemGenel == null || TabItemMedya == null || TabItemSistem == null) return;
 
-            // Step 1 Validation (Temel Bilgiler)
-            bool isStep1Valid = !string.IsNullOrWhiteSpace(txtTitle.Text) &&
-                               !string.IsNullOrWhiteSpace(txtPrice.Text) &&
-                               wpCategories.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>().Any(x => x.IsChecked == true) &&
-                               !string.IsNullOrWhiteSpace(txtDeveloper.Text) &&
-                               !string.IsNullOrWhiteSpace(txtPublisher.Text) &&
-                               dpReleaseDate.SelectedDate != null;
-            TabItemMedya.IsEnabled = isStep1Valid;
+            // Tab 1 Validation (Genel Bilgiler)
+            bool isTab1Valid = IsTab1Valid();
+            TabItemMedya.IsEnabled = isTab1Valid;
 
-            // Step 2 Validation (Medya - En az kapak fotoğrafı zorunlu)
-            bool isStep2Valid = !string.IsNullOrWhiteSpace(_selectedCoverPath);
+            // Tab 2 Validation (Medya)
+            bool isTab2Valid = IsTab2Valid();
+            TabItemMedya.Tag = isTab2Valid ? "Valid" : null;
+            TabItemSistem.IsEnabled = isTab1Valid && isTab2Valid;
+            
+            // Gerçek zamanlı temizleme (Opsiyonel: Kullanıcı yazarken hataları silebiliriz)
+            if (isTab1Valid) ClearTab1Errors();
+            if (isTab2Valid) ClearTab2Errors();
+        }
 
-            TabItemMedya.Tag = isStep2Valid ? "Valid" : null;
-            TabItemSistem.IsEnabled = isStep1Valid && isStep2Valid;
+        private void ClearTab1Errors()
+        {
+            SetFieldValid(txtTitle, txtTitleError);
+            SetFieldValid(txtPrice, txtPriceError);
+            SetFieldValid(txtDeveloper, txtDeveloperError);
+            SetFieldValid(txtPublisher, txtPublisherError);
+            SetFieldValid(txtDescription, txtDescriptionError);
+            SetFieldValid(dpReleaseDate, txtReleaseDateError);
+            txtCategoryError.Visibility = Visibility.Collapsed;
+        }
+
+        private void ClearTab2Errors()
+        {
+            txtCoverError.Visibility = Visibility.Collapsed;
+            SetFieldValid(lstGalleryFiles, txtGalleryError);
+        }
+
+        private void SetFieldInvalid(System.Windows.Controls.Control control, TextBlock errorBlock)
+        {
+            control.BorderBrush = System.Windows.Media.Brushes.Red;
+            control.BorderThickness = new Thickness(1.5);
+            errorBlock.Visibility = Visibility.Visible;
+        }
+
+        private void SetFieldValid(System.Windows.Controls.Control control, TextBlock errorBlock)
+        {
+            control.BorderBrush = TryFindResource("InputBorderBrush") as System.Windows.Media.Brush;
+            if (control.BorderBrush == null) control.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(29, 29, 34));
+            control.BorderThickness = new Thickness(1);
+            errorBlock.Visibility = Visibility.Collapsed;
+        }
+
+        private void ShowTab1Errors()
+        {
+            if (string.IsNullOrWhiteSpace(txtTitle.Text)) SetFieldInvalid(txtTitle, txtTitleError);
+            else SetFieldValid(txtTitle, txtTitleError);
+
+            if (string.IsNullOrWhiteSpace(txtPrice.Text)) SetFieldInvalid(txtPrice, txtPriceError);
+            else SetFieldValid(txtPrice, txtPriceError);
+
+            if (string.IsNullOrWhiteSpace(txtDeveloper.Text)) SetFieldInvalid(txtDeveloper, txtDeveloperError);
+            else SetFieldValid(txtDeveloper, txtDeveloperError);
+
+            if (string.IsNullOrWhiteSpace(txtPublisher.Text)) SetFieldInvalid(txtPublisher, txtPublisherError);
+            else SetFieldValid(txtPublisher, txtPublisherError);
+
+            if (string.IsNullOrWhiteSpace(txtDescription.Text)) SetFieldInvalid(txtDescription, txtDescriptionError);
+            else SetFieldValid(txtDescription, txtDescriptionError);
+
+            if (dpReleaseDate.SelectedDate == null) SetFieldInvalid(dpReleaseDate, txtReleaseDateError);
+            else SetFieldValid(dpReleaseDate, txtReleaseDateError);
+
+            txtCategoryError.Visibility = wpCategories.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>().Any(x => x.IsChecked == true) 
+                ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void ShowTab2Errors()
+        {
+            txtCoverError.Visibility = string.IsNullOrWhiteSpace(_selectedCoverPath) ? Visibility.Visible : Visibility.Collapsed;
+            
+            if (_selectedGalleryPaths.Count < AdminGameController.MinGalleryImageCount) SetFieldInvalid(lstGalleryFiles, txtGalleryError);
+            else SetFieldValid(lstGalleryFiles, txtGalleryError);
+        }
+
+        private void ShowTab3Errors()
+        {
+            txtPlatformError.Visibility = (tglWindows.IsChecked == true || tglMacOs.IsChecked == true || tglLinux.IsChecked == true) 
+                ? Visibility.Collapsed : Visibility.Visible;
+
+            txtFeatureError.Visibility = lstFeatures.SelectedItems.Count >= 1 ? Visibility.Collapsed : Visibility.Visible;
+
+            if (string.IsNullOrWhiteSpace(txtSupportedLanguages.Text)) SetFieldInvalid(txtSupportedLanguages, txtLanguagesError);
+            else SetFieldValid(txtSupportedLanguages, txtLanguagesError);
+
+            if (string.IsNullOrWhiteSpace(txtMinimumRequirements.Text)) SetFieldInvalid(txtMinimumRequirements, txtMinReqError);
+            else SetFieldValid(txtMinimumRequirements, txtMinReqError);
+
+            if (string.IsNullOrWhiteSpace(txtRecommendedRequirements.Text)) SetFieldInvalid(txtRecommendedRequirements, txtRecReqError);
+            else SetFieldValid(txtRecommendedRequirements, txtRecReqError);
+        }
+
+        private bool IsTab1Valid()
+        {
+            return !string.IsNullOrWhiteSpace(txtTitle.Text) &&
+                   !string.IsNullOrWhiteSpace(txtPrice.Text) &&
+                   !string.IsNullOrWhiteSpace(txtDeveloper.Text) &&
+                   !string.IsNullOrWhiteSpace(txtPublisher.Text) &&
+                   !string.IsNullOrWhiteSpace(txtDescription.Text) &&
+                   dpReleaseDate.SelectedDate != null &&
+                   wpCategories.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>().Any(x => x.IsChecked == true);
+        }
+
+        private bool IsTab2Valid()
+        {
+            return !string.IsNullOrWhiteSpace(_selectedCoverPath) &&
+                   _selectedGalleryPaths.Count >= AdminGameController.MinGalleryImageCount &&
+                   _selectedGalleryPaths.Count <= AdminGameController.MaxGalleryImageCount;
+        }
+
+        private bool IsTab3Valid()
+        {
+            return lstFeatures.SelectedItems.Count >= 1 &&
+                   !string.IsNullOrWhiteSpace(txtSupportedLanguages.Text) &&
+                   !string.IsNullOrWhiteSpace(txtMinimumRequirements.Text) &&
+                   !string.IsNullOrWhiteSpace(txtRecommendedRequirements.Text) &&
+                   (tglWindows.IsChecked == true || tglMacOs.IsChecked == true || tglLinux.IsChecked == true);
+        }
+
+        private void NextTab_Click(object sender, RoutedEventArgs e)
+        {
+            if (AdminTabControl.SelectedIndex == 0) // Genel Bilgiler -> Medya
+            {
+                if (!IsTab1Valid())
+                {
+                    ShowTab1Errors();
+                    CustomError.ShowDialog("Lütfen Genel Bilgiler sayfasındaki tüm zorunlu alanları doldurun.", "DOĞRULAMA HATASI");
+                    return;
+                }
+            }
+            else if (AdminTabControl.SelectedIndex == 1) // Medya -> Sistem
+            {
+                if (!IsTab2Valid())
+                {
+                    ShowTab2Errors();
+                    CustomError.ShowDialog($"Lütfen bir kapak fotoğrafı seçin ve en az {AdminGameController.MinGalleryImageCount} adet galeri görseli ekleyin.", "DOĞRULAMA HATASI");
+                    return;
+                }
+            }
+
+            if (AdminTabControl.SelectedIndex < AdminTabControl.Items.Count - 1)
+            {
+                AdminTabControl.SelectedIndex++;
+            }
         }
 
         private void PriceTextBox_OnPaste(object sender, DataObjectPastingEventArgs e)
@@ -327,9 +461,9 @@ namespace VOID_STORE.Views
                 Publisher = txtPublisher.Text.Trim(),
                 ReleaseDateText = dpReleaseDate.SelectedDate?.ToString("dd.MM.yyyy") ?? "",
                 TrailerVideoSourcePath = _selectedTrailerPath,
-                MinimumRequirements = "", // Redesigned to be in Sistem tab
-                RecommendedRequirements = "",
-                SupportedLanguages = "",
+                MinimumRequirements = txtMinimumRequirements.Text.Trim(),
+                RecommendedRequirements = txtRecommendedRequirements.Text.Trim(),
+                SupportedLanguages = txtSupportedLanguages.Text.Trim(),
                 CoverImageSourcePath = _selectedCoverPath,
                 Platforms = GetSelectedPlatforms(),
                 Features = GetSelectedFeatures(),
@@ -411,6 +545,18 @@ namespace VOID_STORE.Views
             txtDiscountRate.Text = "0";
             dpDiscountStart.SelectedDate = null;
             dpDiscountEnd.SelectedDate = null;
+            
+            txtSupportedLanguages.Clear();
+            txtMinimumRequirements.Clear();
+            txtRecommendedRequirements.Clear();
+
+            ClearTab1Errors();
+            ClearTab2Errors();
+            txtPlatformError.Visibility = Visibility.Collapsed;
+            txtFeatureError.Visibility = Visibility.Collapsed;
+            SetFieldValid(txtSupportedLanguages, txtLanguagesError);
+            SetFieldValid(txtMinimumRequirements, txtMinReqError);
+            SetFieldValid(txtRecommendedRequirements, txtRecReqError);
 
             UpdateCoverPreview();
             UpdateTrailerState();
@@ -420,50 +566,31 @@ namespace VOID_STORE.Views
 
         private bool ValidateForm()
         {
-            bool isValid = true;
-
-            // Oyun Adı
-            if (string.IsNullOrWhiteSpace(txtTitle.Text))
+            if (!IsTab1Valid())
             {
-                txtTitleError.Visibility = Visibility.Visible;
-                isValid = false;
-            }
-            else
-            {
-                txtTitleError.Visibility = Visibility.Collapsed;
+                AdminTabControl.SelectedIndex = 0;
+                ShowTab1Errors();
+                CustomError.ShowDialog("Genel Bilgiler kısmında eksik alanlar var.", "DOĞRULAMA HATASI");
+                return false;
             }
 
-            if (string.IsNullOrWhiteSpace(txtPrice.Text))
+            if (!IsTab2Valid())
             {
-                isValid = false;
+                AdminTabControl.SelectedIndex = 1;
+                ShowTab2Errors();
+                CustomError.ShowDialog($"Medya kısmında eksik alanlar var (En az {AdminGameController.MinGalleryImageCount} görsel seçmelisiniz).", "DOĞRULAMA HATASI");
+                return false;
             }
 
-            // Kategori
-            if (!wpCategories.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>().Any(x => x.IsChecked == true))
+            if (!IsTab3Valid())
             {
-                isValid = false;
+                AdminTabControl.SelectedIndex = 2;
+                ShowTab3Errors();
+                CustomError.ShowDialog("Sistem & Platform kısmında eksik alanlar var (Özellikler, Diller ve Gereksinimler zorunludur).", "DOĞRULAMA HATASI");
+                return false;
             }
 
-            if (string.IsNullOrWhiteSpace(txtDeveloper.Text))
-            {
-                isValid = false;
-            }
-            else
-            {
-            }
-
-            // Yayıncı
-            if (string.IsNullOrWhiteSpace(txtPublisher.Text))
-            {
-                isValid = false;
-            }
-
-            if (!isValid)
-            {
-                CustomError.ShowDialog("Lütfen zorunlu alanları doldurun.", "DOĞRULAMA HATASI");
-            }
-
-            return isValid;
+            return true;
         }
 
         private void UpdateCoverPreview()

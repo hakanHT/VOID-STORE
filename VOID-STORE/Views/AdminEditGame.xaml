@@ -100,8 +100,21 @@
                             <Grid x:Name="PART_Root">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="34"/></Grid.ColumnDefinitions>
                                 <DatePickerTextBox x:Name="PART_TextBox" Grid.Column="0" Focusable="False" IsReadOnly="True"/>
-                                <Button x:Name="PART_Button" Grid.Column="1" Background="Transparent" BorderThickness="0" Cursor="Hand">
-                                    <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" Foreground="#8F98A5" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="14"/>
+                                <Button x:Name="PART_Button" Grid.Column="1" Background="Transparent" BorderThickness="0" Cursor="Hand" Foreground="#8F98A5">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="BtnBorder" Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="BtnBorder" Property="Background" Value="#FFFFFF"/>
+                                                    <Setter Property="Foreground" Value="#0A0A0C"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="14"/>
                                 </Button>
                                 <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom" StaysOpen="False"/>
                             </Grid>

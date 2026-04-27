@@ -16,6 +16,7 @@
         Background="Transparent">
 
     <Window.Resources>
+        <SolidColorBrush x:Key="InputBorderBrush" Color="#1D1D22"/>
         <Style x:Key="TitleBarButton" TargetType="Button">
             <Setter Property="Width" Value="42"/>
             <Setter Property="Height" Value="30"/>
@@ -315,8 +316,21 @@
                             <Grid x:Name="PART_Root">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="34"/></Grid.ColumnDefinitions>
                                 <DatePickerTextBox x:Name="PART_TextBox" Grid.Column="0" Focusable="False" IsReadOnly="True"/>
-                                <Button x:Name="PART_Button" Grid.Column="1" Background="Transparent" BorderThickness="0" Cursor="Hand">
-                                    <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" Foreground="#8F98A5" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="14"/>
+                                <Button x:Name="PART_Button" Grid.Column="1" Background="Transparent" BorderThickness="0" Cursor="Hand" Foreground="#8F98A5">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="BtnBorder" Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="BtnBorder" Property="Background" Value="#FFFFFF"/>
+                                                    <Setter Property="Foreground" Value="#0A0A0C"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="14"/>
                                 </Button>
                                 <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom" StaysOpen="False"/>
                             </Grid>
@@ -493,7 +507,6 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="26"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
@@ -537,6 +550,7 @@
                                                 <TextBox x:Name="txtPrice" Style="{StaticResource InputTextBox}" PreviewTextInput="OnlyNumbers_PreviewTextInput" LostFocus="PriceTextBox_LostFocus" TextChanged="Input_Changed" MaxLength="4"/>
                                                 <Border Grid.Column="2" Style="{StaticResource InputSuffixBorder}" Height="44" CornerRadius="0"><TextBlock Text="&#x20BA;" Foreground="White" FontSize="16" VerticalAlignment="Center"/></Border>
                                             </Grid>
+                                            <TextBlock x:Name="txtPriceError" Text="* Fiyat bilgisi zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                             <TextBlock x:Name="txtFreeHint" Text="Oyun ücretsiz olarak oynanabilir" Foreground="#2ECC71" FontSize="11" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </Grid>
@@ -556,16 +570,19 @@
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="Yapımcı" Style="{StaticResource InputLabel}"/>
                                             <TextBox x:Name="txtDeveloper" Style="{StaticResource InputTextBox}" TextChanged="Input_Changed"/>
+                                            <TextBlock x:Name="txtDeveloperError" Text="* Yapımcı bilgisi zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="Yayıncı" Style="{StaticResource InputLabel}"/>
                                             <TextBox x:Name="txtPublisher" Style="{StaticResource InputTextBox}" TextChanged="Input_Changed"/>
+                                            <TextBlock x:Name="txtPublisherError" Text="* Yayıncı bilgisi zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="4">
                                             <TextBlock Text="Çıkış Tarihi" Style="{StaticResource InputLabel}"/>
                                             <DatePicker x:Name="dpReleaseDate" Style="{StaticResource ModernDatePicker}"/>
+                                            <TextBlock x:Name="txtReleaseDateError" Text="* Tarih seçimi zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -575,6 +592,7 @@
                                     <StackPanel>
                                         <TextBlock Text="Kategoriler (Maksimum 3)" Style="{StaticResource InputLabel}"/>
                                         <WrapPanel x:Name="wpCategories" Margin="0,8,0,0"/>
+                                        <TextBlock x:Name="txtCategoryError" Text="* En az bir kategori seçmelisiniz" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                     </StackPanel>
                                 </Border>
 
@@ -614,14 +632,18 @@
                                     <StackPanel>
                                         <TextBlock Text="Oyun Açıklaması" Foreground="#D6D9DE" Style="{StaticResource InputLabel}"/>
                                         <TextBox x:Name="txtDescription" Style="{StaticResource InputTextBox}" Height="120" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" TextChanged="Input_Changed"/>
+                                        <TextBlock x:Name="txtDescriptionError" Text="* Oyun açıklaması zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
+                                 
+                                 <!-- Devam Et Butonu -->
+                                 <Button Content="Devam Et — Medya Yönetimi" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" Width="280" Margin="0,24,0,0" Click="NextTab_Click"/>
+                             </StackPanel>
+                         </ScrollViewer>
+                     </TabItem>
 
-                    <!-- Tab 2: Medya Yönetimi -->
-                    <TabItem x:Name="TabItemMedya" Header="Medya Yönetimi" IsEnabled="False">
+                     <!-- Tab 2: Medya Yönetimi -->
+                     <TabItem x:Name="TabItemMedya" Header="Medya Yönetimi" IsEnabled="False">
                         <Grid Margin="0,0,12,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="320"/>
@@ -641,6 +663,7 @@
                                     </Grid>
                                 </Border>
                                 <Button Content="Kapak Seç" Style="{StaticResource GhostButton}" Margin="0,12,0,0" Click="SelectCoverButton_Click"/>
+                                <TextBlock x:Name="txtCoverError" Text="* Ana görsel seçimi zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed" HorizontalAlignment="Center"/>
                                 <Border Background="#111115" Margin="0,12,0,0" Padding="12" BorderThickness="1" BorderBrush="#1C1C22">
                                     <TextBlock x:Name="txtCoverStatus" Text="Henüz seçilmedi" Foreground="#8F98A5" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center"/>
                                 </Border>
@@ -665,19 +688,29 @@
                                             </Border>
                                         </Grid>
 
-                                        <TextBlock Text="Seçilen Galeri Dosyaları" Style="{StaticResource InputLabel}"/>
-                                        <ListBox x:Name="lstGalleryFiles" Background="#0D0D10" BorderThickness="1" BorderBrush="#1C1C22" Height="200" Foreground="#D7DDE5" FontSize="12" Padding="8"/>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Grid>
-                    </TabItem>
+                                         <TextBlock Text="Seçilen Galeri Dosyaları" Style="{StaticResource InputLabel}"/>
+                                         <ListBox x:Name="lstGalleryFiles" Background="#0D0D10" BorderThickness="1" BorderBrush="#1C1C22" Height="200" Foreground="#D7DDE5" FontSize="12" Padding="8"/>
+                                         <TextBlock x:Name="txtGalleryError" Text="* En az 5 adet galeri görseli eklemelisiniz" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
+                                     </StackPanel>
+                                 </Border>
+                                 
+                                 <!-- Devam Et Butonu -->
+                                 <Button Content="Devam Et — Sistem &amp; Platform" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" Width="280" Margin="0,24,0,0" Click="NextTab_Click"/>
+                             </StackPanel>
+                         </Grid>
+                     </TabItem>
 
-                    <!-- Tab 3: Sistem & Platform -->
-                    <TabItem x:Name="TabItemSistem" Header="Sistem &amp; Platform" IsEnabled="False">
+                     <!-- Tab 3: Sistem & Platform -->
+                     <TabItem x:Name="TabItemSistem" Header="Sistem &amp; Platform" IsEnabled="False">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
                             <Grid Margin="0,0,12,0">
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="24"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="24"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="32"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
                                 
                                 <Border Grid.Row="0" Style="{StaticResource SectionCard}">
                                     <StackPanel>
@@ -686,10 +719,12 @@
                                             <StackPanel Grid.Column="0">
                                                 <TextBlock Text="Platformlar" Style="{StaticResource InputLabel}"/>
                                                 <WrapPanel><ToggleButton x:Name="tglWindows" Content="Windows" Style="{StaticResource PlatformToggleButton}"/><ToggleButton x:Name="tglMacOs" Content="macOS" Style="{StaticResource PlatformToggleButton}"/><ToggleButton x:Name="tglLinux" Content="Linux" Style="{StaticResource PlatformToggleButton}"/></WrapPanel>
+                                                <TextBlock x:Name="txtPlatformError" Text="* En az bir platform seçmelisiniz" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2">
                                                 <TextBlock Text="Özellikler" Style="{StaticResource InputLabel}"/>
                                                 <ListBox x:Name="lstFeatures" Style="{StaticResource CategoryListBox}" ItemContainerStyle="{StaticResource CategoryListItemStyle}" SelectionMode="Multiple"><ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel></ListBox>
+                                                <TextBlock x:Name="txtFeatureError" Text="* En az bir özellik seçmelisiniz" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                             </StackPanel>
                                         </Grid>
                                         
@@ -698,6 +733,7 @@
                                         <StackPanel>
                                             <TextBlock Text="Desteklenen Diller" Style="{StaticResource InputLabel}"/>
                                             <TextBox x:Name="txtSupportedLanguages" Style="{StaticResource InputTextBox}" Height="100" AcceptsReturn="True" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="txtLanguagesError" Text="* Desteklenen diller zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
@@ -708,26 +744,25 @@
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="Minimum Gereksinimler" Style="{StaticResource InputLabel}"/>
                                             <TextBox x:Name="txtMinimumRequirements" Style="{StaticResource InputTextBox}" Height="220" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                                            <TextBlock x:Name="txtMinReqError" Text="* Minimum gereksinimler zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="Önerilen Gereksinimler" Style="{StaticResource InputLabel}"/>
                                             <TextBox x:Name="txtRecommendedRequirements" Style="{StaticResource InputTextBox}" Height="220" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                                            <TextBlock x:Name="txtRecReqError" Text="* Önerilen gereksinimler zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
+                                
+                                <!-- İşlem Butonları (Sadece Son Tabda) -->
+                                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
+                                    <Button Content="Formu Temizle" Style="{StaticResource GhostButton}" Width="160" Height="48" Margin="0,0,16,0" Click="ResetButton_Click"/>
+                                    <Button Content="Oyunu Onaya Gönder" Style="{StaticResource PrimaryButton}" Width="280" Height="48" Click="SaveButton_Click"/>
+                                </StackPanel>
                             </Grid>
                         </ScrollViewer>
                     </TabItem>
                 </TabControl>
-
-                <!-- Sticky Footer -->
-                <Border Grid.Row="3" Background="#0A0A0C" BorderBrush="#1D1D22" BorderThickness="0,1,0,0" Padding="0,24,0,0" Margin="0,12,0,0">
-                    <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" Content="Formu Temizle" Style="{StaticResource GhostButton}" Click="ResetButton_Click" HorizontalAlignment="Left" Width="160"/>
-                        <Button Grid.Column="2" Content="Kaydı Oluştur" Style="{StaticResource PrimaryButton}" Click="SaveButton_Click" Height="54" FontSize="15"/>
-                    </Grid>
-                </Border>
             </Grid>
         </Grid>
     </Border>
