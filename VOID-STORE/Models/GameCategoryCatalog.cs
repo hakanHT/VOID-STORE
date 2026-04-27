@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,14 +11,22 @@ namespace VOID_STORE.Models
         {
             "Aksiyon",
             "Macera",
+            "RPG",
             "MMORPG",
             "FPS",
-            "RPG",
             "Strateji",
             "Korku",
-            "Yarış",
+            "Bağımsız",
+            "Hayatta Kalma",
+            "Açık Dünya",
+            "Roguelike",
+            "Platform",
+            "Simülasyon",
             "Spor",
-            "Simülasyon"
+            "Yarış",
+            "Bulmaca",
+            "Çok Oyunculu",
+            "Oynaması Ücretsiz"
         };
 
         // varsayılan kategori
@@ -26,17 +34,30 @@ namespace VOID_STORE.Models
 
         public static string Normalize(string? value)
         {
-            // gelen değeri geçerli kategoriye uyarla
             if (string.IsNullOrWhiteSpace(value))
             {
                 return Default;
             }
 
-            string normalizedValue = value.Trim();
-            string? matchedValue = All.FirstOrDefault(
-                category => category.Equals(normalizedValue, StringComparison.OrdinalIgnoreCase));
+            // Virgül veya pipe ile ayrılmış birden fazla kategoriyi destekle
+            var parts = value.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var normalizedParts = new List<string>();
 
-            return matchedValue ?? Default;
+            foreach (var part in parts)
+            {
+                string? matchedValue = All.FirstOrDefault(
+                    category => category.Equals(part, StringComparison.OrdinalIgnoreCase));
+                
+                // Katalogda varsa düzgün halini al, yoksa olduğu gibi koru (eski veriler için)
+                normalizedParts.Add(matchedValue ?? part);
+            }
+
+            if (normalizedParts.Count == 0)
+            {
+                return Default;
+            }
+
+            return string.Join(", ", normalizedParts);
         }
     }
 }

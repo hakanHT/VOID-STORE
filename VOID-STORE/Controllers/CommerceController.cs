@@ -35,6 +35,35 @@ namespace VOID_STORE.Controllers
                 : Convert.ToDecimal(result, CultureInfo.InvariantCulture);
         }
 
+        public (decimal TotalAdded, decimal TotalSpent) GetWalletStats(int userId)
+        {
+            // misafir için boş istatistik dön
+            if (userId <= 0)
+            {
+                return (0, 0);
+            }
+
+            // tüm hareketleri çekip kod tarafında topla
+            DataTable table = DatabaseManager.ExecuteQuery(
+                @"SELECT 
+                    SUM(CASE WHEN Amount > 0 THEN Amount ELSE 0 END) as TotalAdded,
+                    SUM(CASE WHEN Amount < 0 THEN ABS(Amount) ELSE 0 END) as TotalSpent
+                  FROM WalletTransactions
+                  WHERE UserId = @UserId;",
+                new SqlParameter("@UserId", userId));
+
+            if (table.Rows.Count == 0 || table.Rows[0]["TotalAdded"] == DBNull.Value)
+            {
+                return (0, 0);
+            }
+
+            DataRow row = table.Rows[0];
+            return (
+                Convert.ToDecimal(row["TotalAdded"], CultureInfo.InvariantCulture),
+                Convert.ToDecimal(row["TotalSpent"], CultureInfo.InvariantCulture)
+            );
+        }
+
         public IReadOnlyList<WalletTransactionItem> GetRecentTransactions(int userId, int take = 8)
         {
             // son hareketleri yeni tarihten eskiye getir

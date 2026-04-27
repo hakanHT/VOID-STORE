@@ -77,17 +77,22 @@ namespace VOID_STORE.Views
         {
             var selected = wpCategories.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>()
                 .Where(x => x.IsChecked == true)
-                .Select(x => x.Content.ToString());
-            return string.Join(", ", selected);
+                .Select(x => x.Content?.ToString() ?? string.Empty);
+            
+            return GameCategoryCatalog.Normalize(string.Join(", ", selected));
         }
 
         private void SetSelectedCategories(string categoryString)
         {
             if (string.IsNullOrWhiteSpace(categoryString)) return;
-            var cats = categoryString.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+            
+            // Farklı ayraçları destekle ve boşlukları temizle
+            var cats = categoryString.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            
             foreach (var tgl in wpCategories.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>())
             {
-                tgl.IsChecked = cats.Contains(tgl.Content.ToString());
+                string toggleContent = tgl.Content?.ToString() ?? string.Empty;
+                tgl.IsChecked = cats.Any(c => c.Equals(toggleContent, StringComparison.OrdinalIgnoreCase));
             }
         }
 

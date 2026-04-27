@@ -469,6 +469,7 @@ namespace VOID_STORE.Views
             EnsureSession();
             ConfigureProfileArea();
             UpdateSearchPlaceholder();
+            DataObject.AddPastingHandler(txtWalletCustomAmount, WalletCustomAmount_OnPaste);
             ShowStoreView();
             // pencere ikonunu ayarla
             UpdateWindowGlyph();
@@ -818,10 +819,11 @@ namespace VOID_STORE.Views
             }
 
             return _libraryItems
-                .Where(item => string.Equals(
-                    GameCategoryCatalog.Normalize(item.Category),
-                    _selectedLibraryCategory,
-                    StringComparison.OrdinalIgnoreCase))
+                .Where(item => {
+                    var normalized = GameCategoryCatalog.Normalize(item.Category);
+                    var parts = normalized.Split(new[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    return parts.Any(p => p.Equals(_selectedLibraryCategory, StringComparison.OrdinalIgnoreCase));
+                })
                 .ToList();
         }
 
@@ -2377,6 +2379,19 @@ namespace VOID_STORE.Views
                 ? "Giriş yapman gerekiyor"
                 : FormatMoney(UserSession.Balance);
 
+            // istatistikleri veritabanından çek (toplam yüklenen/harcanan)
+            if (!UserSession.IsGuest)
+            {
+                var stats = _commerceController.GetWalletStats(UserSession.UserId);
+                txtWalletTotalAdded.Text = FormatMoney(stats.TotalAdded);
+                txtWalletTotalSpent.Text = FormatMoney(stats.TotalSpent);
+            }
+            else
+            {
+                txtWalletTotalAdded.Text = "₺0";
+                txtWalletTotalSpent.Text = "₺0";
+            }
+
             // hareket geçmişini listele
             icWalletTransactions.ItemsSource = null;
             icWalletTransactions.ItemsSource = _walletTransactions;
@@ -2388,6 +2403,29 @@ namespace VOID_STORE.Views
 
             // seçili kart kartvizitini yenile
             ApplyPaymentMethodSelection();
+        }
+
+        private void txtWalletCustomAmount_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // sadece rakamlara izin ver
+            e.Handled = !e.Text.All(char.IsDigit);
+        }
+
+        private void WalletCustomAmount_OnPaste(object sender, DataObjectPastingEventArgs e)
+        {
+            // yapıştırılan metin sayı değilse iptal et
+            if (e.DataObject.GetDataPresent(typeof(string)))
+            {
+                string text = (string)e.DataObject.GetData(typeof(string));
+                if (!text.All(char.IsDigit))
+                {
+                    e.CancelCommand();
+                }
+            }
+            else
+            {
+                e.CancelCommand();
+            }
         }
 
         private void RefreshLibraryPanel()

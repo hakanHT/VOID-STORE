@@ -73,8 +73,9 @@ namespace VOID_STORE.Views
         {
             var selected = wpCategories.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>()
                 .Where(x => x.IsChecked == true)
-                .Select(x => x.Content.ToString());
-            return string.Join(", ", selected);
+                .Select(x => x.Content?.ToString() ?? string.Empty);
+            
+            return GameCategoryCatalog.Normalize(string.Join(", ", selected));
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -40,7 +40,7 @@ namespace VOID_STORE.Controllers
                   WHERE ApprovalStatus = 'approved'
                     AND IsActive = 1
                     AND (@SearchText = '' OR Title LIKE CONCAT('%', @SearchText, '%'))
-                    AND (@Category = '' OR Category = @Category);",
+                    AND (@Category = '' OR Category LIKE CONCAT('%', @Category, '%'));",
                 countParameters);
 
             int totalCount = countResult == null || countResult == DBNull.Value
@@ -66,7 +66,7 @@ namespace VOID_STORE.Controllers
                   WHERE ApprovalStatus = 'approved'
                     AND IsActive = 1
                     AND (@SearchText = '' OR Title LIKE CONCAT('%', @SearchText, '%'))
-                    AND (@Category = '' OR Category = @Category)
+                    AND (@Category = '' OR Category LIKE CONCAT('%', @Category, '%'))
                   ORDER BY GameId DESC
                   LIMIT @Limit OFFSET @Offset;",
                 new SqlParameter("@SearchText", normalizedSearch),
