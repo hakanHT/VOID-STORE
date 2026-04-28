@@ -49,7 +49,7 @@ namespace VOID_STORE.Views
             LoadGames();
             ShowEditor(false);
         }
-
+        // Seçilen oyunun verilerini doldurmak için PopulateTimeComboBoxes metoduna artık gerek yok
         private void LoadCategoryToggles()
         {
             wpCategories.Children.Clear();
@@ -354,6 +354,28 @@ namespace VOID_STORE.Views
         private void OnlyNumbers_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");
+        }
+
+        // saat degeri 0-23 arasinda olmasini zorlayan metot
+        private void HourTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb)
+            {
+                if (!int.TryParse(tb.Text, out int val)) val = 0;
+                val = Math.Max(0, Math.Min(23, val));
+                tb.Text = val.ToString("D2");
+            }
+        }
+
+        // dakika degeri 0-59 arasinda olmasini zorlayan metot
+        private void MinuteTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb)
+            {
+                if (!int.TryParse(tb.Text, out int val)) val = 0;
+                val = Math.Max(0, Math.Min(59, val));
+                tb.Text = val.ToString("D2");
+            }
         }
 
         private void UpdateNavigationState()
