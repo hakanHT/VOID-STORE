@@ -108,6 +108,7 @@ namespace VOID_STORE.Controllers
                     Subtitle = row["Subtitle"]?.ToString() ?? string.Empty,
                     PriceAmount = finalPrice,
                     PriceText = isReleased ? FormatPrice(finalPrice) : "Çok Yakında",
+                    OriginalPriceText = isOnDiscount ? FormatPrice(basePrice) : string.Empty,
                     IsReleased = isReleased,
                     IsOnDiscount = isOnDiscount,
                     DiscountRate = discountRate,

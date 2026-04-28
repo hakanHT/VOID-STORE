@@ -671,6 +671,7 @@
                                             <TextBlock Text="&#xE722;" FontFamily="Segoe MDL2 Assets" FontSize="48" Foreground="#1C1C22" HorizontalAlignment="Center"/>
                                             <TextBlock Text="Kapak Görseli" Foreground="White" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,16,0,0"/>
                                             <TextBlock Text="Dikey, yüksek çözünürlük" Foreground="#8F98A5" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                            <TextBlock Text="1200×1600 çözünürlüğe sahip resim gerekli" Foreground="#5A626E" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0" TextWrapping="Wrap" TextAlignment="Center" Width="160"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>

@@ -590,7 +590,7 @@
                         <!-- Placeholder -->
                         <Border x:Name="EditorPlaceholder" Background="#0F0F12" BorderBrush="#19191E" BorderThickness="1" Padding="36">
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE739;" FontFamily="Segoe MDL2 Assets" FontSize="56" Foreground="#1C1C22" HorizontalAlignment="Center"/>
+                                <Image Source="/voidstoreimages/VOIDSTORE_NOBG_LOGO.png" Width="140" Opacity="0.18" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 <TextBlock Text="Soldan bir oyun seçin" Foreground="White" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
                                 <TextBlock x:Name="txtPlaceholderHint" Text="Yayındaki bir oyunu seçtiğinizde düzenleme alanı burada açılır." Foreground="#8F98A5" FontSize="13" Margin="0,12,0,0" HorizontalAlignment="Center" TextAlignment="Center" Width="300" TextWrapping="Wrap"/>
                             </StackPanel>

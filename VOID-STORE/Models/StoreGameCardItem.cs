@@ -14,6 +14,8 @@ namespace VOID_STORE.Models
 
         public string PriceText { get; set; } = string.Empty;
 
+        public string OriginalPriceText { get; set; } = string.Empty;
+
         public decimal PriceAmount { get; set; }
 
         public string CoverImagePath { get; set; } = string.Empty;

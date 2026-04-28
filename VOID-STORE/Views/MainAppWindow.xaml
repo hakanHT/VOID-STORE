@@ -1051,12 +1051,7 @@
                                                                                 <ScaleTransform ScaleX="1" ScaleY="1"/>
                                                                             </Image.RenderTransform>
                                                                         </Image>
-                                                                        <Border x:Name="brdStoreCardDiscountBadge" Background="#00C35A" CornerRadius="0" Padding="8,4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Visibility="Collapsed">
-                                                                            <StackPanel Orientation="Horizontal">
-                                                                                <TextBlock Text="-%" Foreground="White" FontSize="14" FontWeight="Bold"/>
-                                                                                <TextBlock Text="{Binding DiscountRate}" Foreground="White" FontSize="14" FontWeight="Bold"/>
-                                                                            </StackPanel>
-                                                                        </Border>
+
                                                                         <Border x:Name="brdStoreCardComingSoonBadge" Background="#1A5FB4" CornerRadius="0" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Visibility="Collapsed">
                                                                             <TextBlock Text="YAKINDA" Foreground="White" FontSize="11" FontWeight="Bold"/>
                                                                         </Border>
@@ -1069,7 +1064,27 @@
                                                         <TextBlock Text="{Binding Category}" Foreground="#8F98A5" FontSize="12" Margin="0,14,0,0"/>
                                                         <TextBlock Text="{Binding Title}" Foreground="White" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
                                                         <TextBlock x:Name="txtStoreCardStatus" Text="{Binding StatusText}" Foreground="#82E4B0" FontSize="11" FontWeight="SemiBold" Margin="0,10,0,0" TextWrapping="Wrap"/>
-                                                        <TextBlock x:Name="txtStoreCardPrice" Text="{Binding PriceText}" Foreground="White" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"/>
+                                                        <!-- Epic Games stilinde fiyat satiri -->
+                                                        <Grid Margin="0,14,0,0">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <!-- Indirim rozeti (sadece indirimde gorunsun) -->
+                                                            <Border x:Name="brdStoreCardDiscountBadge" Background="#00C35A" Padding="6,3" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="-%" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                                    <TextBlock Text="{Binding DiscountRate}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <!-- Fiyat alani -->
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <!-- Ustu cizgili orijinal fiyat (sadece indirimde) -->
+                                                                <TextBlock x:Name="txtStoreCardOriginalPrice" Text="{Binding OriginalPriceText}" Foreground="#6F7783" FontSize="12" FontWeight="SemiBold" TextDecorations="Strikethrough" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                                                <!-- Indirimli / normal fiyat -->
+                                                                <TextBlock x:Name="txtStoreCardPrice" Text="{Binding PriceText}" Foreground="White" FontSize="15" FontWeight="SemiBold"/>
+                                                            </StackPanel>
+                                                        </Grid>
                                                     </StackPanel>
                                                 </Button>
                                                 <DataTemplate.Triggers>
@@ -1081,7 +1096,8 @@
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsOnDiscount}" Value="True">
                                                         <Setter TargetName="brdStoreCardDiscountBadge" Property="Visibility" Value="Visible"/>
-                                                        <Setter TargetName="txtStoreCardPrice" Property="Foreground" Value="#82E4B0"/>
+                                                        <Setter TargetName="txtStoreCardOriginalPrice" Property="Visibility" Value="Visible"/>
+                                                        <Setter TargetName="txtStoreCardPrice" Property="Foreground" Value="#00C97A"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsReleased}" Value="False">
                                                         <Setter TargetName="brdStoreCardComingSoonBadge" Property="Visibility" Value="Visible"/>
@@ -2315,10 +2331,10 @@
                                             </StackPanel>
                                             
                                             <!-- İndirim Sayacı -->
-                                            <Border x:Name="brdDetailDiscountTimer" Background="#1A1D24" BorderBrush="#2A313C" BorderThickness="1" CornerRadius="0" Padding="12,8" Margin="0,12,0,0" Visibility="Collapsed">
+                                            <Border x:Name="brdDetailDiscountTimer" Background="#0D2418" BorderBrush="#1A4A30" BorderThickness="1" CornerRadius="0" Padding="12,8" Margin="0,12,0,0" Visibility="Collapsed">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="&#xE916;" FontFamily="Segoe MDL2 Assets" Foreground="#FFCC00" FontSize="12" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="txtDetailDiscountTimer" Foreground="#E2E8F0" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="&#xE916;" FontFamily="Segoe MDL2 Assets" Foreground="#00C97A" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="txtDetailDiscountTimer" Foreground="#82E4B0" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
