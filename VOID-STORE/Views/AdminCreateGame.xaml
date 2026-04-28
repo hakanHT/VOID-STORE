@@ -581,7 +581,9 @@
 
                                         <StackPanel Grid.Column="4">
                                             <TextBlock Text="Çıkış Tarihi" Style="{StaticResource InputLabel}"/>
-                                            <DatePicker x:Name="dpReleaseDate" Style="{StaticResource ModernDatePicker}"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <DatePicker x:Name="dpReleaseDate" Style="{StaticResource ModernDatePicker}" Width="140"/>
+                                            </StackPanel>
                                             <TextBlock x:Name="txtReleaseDateError" Text="* Tarih seçimi zorunludur" Foreground="#FF5555" FontSize="10" Margin="4,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </Grid>
@@ -602,7 +604,7 @@
                                         <TextBlock Text="İNDİRİM YÖNETİMİ" Foreground="#63A7FF" FontSize="12" FontWeight="Bold" Margin="0,0,0,16"/>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="100"/>
                                                 <ColumnDefinition Width="20"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="20"/>
@@ -615,13 +617,23 @@
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2">
-                                                <TextBlock Text="Başlangıç Tarihi" Foreground="#D6D9DE" Style="{StaticResource InputLabel}"/>
-                                                <DatePicker x:Name="dpDiscountStart" Style="{StaticResource ModernDatePicker}"/>
+                                                <TextBlock Text="Başlangıç Tarihi &amp; Saat" Foreground="#D6D9DE" Style="{StaticResource InputLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <DatePicker x:Name="dpDiscountStart" Style="{StaticResource ModernDatePicker}" Width="130"/>
+                                                    <TextBox x:Name="txtDiscountStartHour" Style="{StaticResource InputTextBox}" Width="48" Margin="8,0,0,0" MaxLength="2" Text="00" TextAlignment="Center" PreviewTextInput="OnlyNumbers_PreviewTextInput" LostFocus="HourTextBox_LostFocus"/>
+                                                    <TextBlock Text=":" Foreground="#8F98A5" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="4,0,4,0"/>
+                                                    <TextBox x:Name="txtDiscountStartMinute" Style="{StaticResource InputTextBox}" Width="48" Margin="0,0,0,0" MaxLength="2" Text="00" TextAlignment="Center" PreviewTextInput="OnlyNumbers_PreviewTextInput" LostFocus="MinuteTextBox_LostFocus"/>
+                                                </StackPanel>
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="4">
-                                                <TextBlock Text="Bitiş Tarihi" Foreground="#D6D9DE" Style="{StaticResource InputLabel}"/>
-                                                <DatePicker x:Name="dpDiscountEnd" Style="{StaticResource ModernDatePicker}"/>
+                                                <TextBlock Text="Bitiş Tarihi &amp; Saat" Foreground="#D6D9DE" Style="{StaticResource InputLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <DatePicker x:Name="dpDiscountEnd" Style="{StaticResource ModernDatePicker}" Width="130"/>
+                                                    <TextBox x:Name="txtDiscountEndHour" Style="{StaticResource InputTextBox}" Width="48" Margin="8,0,0,0" MaxLength="2" Text="00" TextAlignment="Center" PreviewTextInput="OnlyNumbers_PreviewTextInput" LostFocus="HourTextBox_LostFocus"/>
+                                                    <TextBlock Text=":" Foreground="#8F98A5" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="4,0,4,0"/>
+                                                    <TextBox x:Name="txtDiscountEndMinute" Style="{StaticResource InputTextBox}" Width="48" Margin="0,0,0,0" MaxLength="2" Text="00" TextAlignment="Center" PreviewTextInput="OnlyNumbers_PreviewTextInput" LostFocus="MinuteTextBox_LostFocus"/>
+                                                </StackPanel>
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>

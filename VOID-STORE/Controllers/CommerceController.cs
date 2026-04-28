@@ -177,6 +177,9 @@ namespace VOID_STORE.Controllers
                     g.Title,
                     g.Category,
                     g.Price,
+                    g.DiscountRate,
+                    g.DiscountStartDate,
+                    g.DiscountEndDate,
                     g.CoverImagePath
                   FROM CartItems c
                   INNER JOIN Games g ON g.GameId = c.GameId
@@ -188,6 +191,7 @@ namespace VOID_STORE.Controllers
 
             // tabloyu kart listesine dönüştür
             List<CartGameItem> items = new();
+            DateTime now = DateTime.Now;
 
             foreach (DataRow row in table.Rows)
             {
@@ -196,8 +200,16 @@ namespace VOID_STORE.Controllers
                     ? string.Empty
                     : row["CoverImagePath"]?.ToString() ?? string.Empty;
 
-                // fiyatı para tipine çevir
-                decimal price = Convert.ToDecimal(row["Price"], CultureInfo.InvariantCulture);
+                decimal basePrice = Convert.ToDecimal(row["Price"], CultureInfo.InvariantCulture);
+                int discountRate = row["DiscountRate"] == DBNull.Value ? 0 : Convert.ToInt32(row["DiscountRate"]);
+                DateTime? discStart = row["DiscountStartDate"] == DBNull.Value ? null : (DateTime?)row["DiscountStartDate"];
+                DateTime? discEnd = row["DiscountEndDate"] == DBNull.Value ? null : (DateTime?)row["DiscountEndDate"];
+
+                bool isOnDiscount = discountRate > 0 && 
+                                   (discStart == null || discStart <= now) && 
+                                   (discEnd == null || discEnd >= now);
+
+                decimal effectivePrice = isOnDiscount ? basePrice * (100 - discountRate) / 100 : basePrice;
 
                 // sepet kart modelini doldur
                 items.Add(new CartGameItem
@@ -205,8 +217,8 @@ namespace VOID_STORE.Controllers
                     GameId = Convert.ToInt32(row["GameId"]),
                     Title = row["Title"]?.ToString() ?? string.Empty,
                     Category = GameCategoryCatalog.Normalize(row["Category"]?.ToString()),
-                    PriceAmount = price,
-                    PriceText = FormatPrice(price),
+                    PriceAmount = effectivePrice,
+                    PriceText = FormatPrice(effectivePrice),
                     CoverImagePath = coverPath,
                     CoverPreview = GameAssetManager.LoadBitmap(coverPath)
                 });
@@ -297,9 +309,27 @@ namespace VOID_STORE.Controllers
             }
 
             // oyun geçerli mi kontrol et
-            if (!GameExists(gameId))
+            DataTable gameCheck = DatabaseManager.ExecuteQuery(
+                @"SELECT Title, ReleaseDate 
+                  FROM Games 
+                  WHERE GameId = @GameId AND ApprovalStatus = 'approved' AND IsActive = 1 
+                  LIMIT 1;",
+                new SqlParameter("@GameId", gameId));
+
+            if (gameCheck.Rows.Count == 0)
             {
                 throw new InvalidOperationException("Seçilen oyun mağazada bulunamadı.");
+            }
+
+            // Cikis tarihi kontrolü (Henüz cikmamis oyun sepete eklenemez)
+            DataRow gameRow = gameCheck.Rows[0];
+            if (gameRow["ReleaseDate"] != DBNull.Value)
+            {
+                DateTime releaseDate = Convert.ToDateTime(gameRow["ReleaseDate"]);
+                if (releaseDate > DateTime.Now)
+                {
+                    throw new InvalidOperationException($"{gameRow["Title"]} henüz çıkış yapmadığı için sepete eklenemez.");
+                }
             }
 
             // sahip olunan oyun tekrar sepete girmesin
@@ -360,7 +390,7 @@ namespace VOID_STORE.Controllers
                 // boş sepette checkout yapma
                 if (cartEntries.Count == 0)
                 {
-                    throw new InvalidOperationException("Satın alınacak oyun bulunamadı.");
+                    throw new InvalidOperationException("Satın alınacak oyun bulunamadı veya henüz çıkış yapmamış oyunlar var.");
                 }
 
                 // toplam tutarı hesapla
@@ -495,7 +525,11 @@ namespace VOID_STORE.Controllers
                 @"SELECT
                     g.GameId,
                     g.Title,
-                    g.Price
+                    g.Price,
+                    g.DiscountRate,
+                    g.DiscountStartDate,
+                    g.DiscountEndDate,
+                    g.ReleaseDate
                   FROM CartItems c
                   INNER JOIN Games g ON g.GameId = c.GameId
                   LEFT JOIN UserLibrary ul ON ul.UserId = c.UserId AND ul.GameId = c.GameId
@@ -512,13 +546,35 @@ namespace VOID_STORE.Controllers
             // reader sonucunu tuple listesine dönüştür
             using var reader = command.ExecuteReader();
             List<(int GameId, string Title, decimal Price)> items = new();
+            DateTime now = DateTime.Now;
 
             while (reader.Read())
             {
+                // Cikis tarihi kontrolü (Henüz cikmamis oyun ödemeye giremez)
+                if (!reader.IsDBNull(reader.GetOrdinal("ReleaseDate")))
+                {
+                    DateTime releaseDate = reader.GetDateTime(reader.GetOrdinal("ReleaseDate"));
+                    if (releaseDate > now)
+                    {
+                        continue; // Henüz cikmadiysa bu turda satin alamaz
+                    }
+                }
+
+                decimal basePrice = reader.GetDecimal(reader.GetOrdinal("Price"));
+                int discountRate = reader.IsDBNull(reader.GetOrdinal("DiscountRate")) ? 0 : reader.GetInt32(reader.GetOrdinal("DiscountRate"));
+                DateTime? discStart = reader.IsDBNull(reader.GetOrdinal("DiscountStartDate")) ? null : (DateTime?)reader.GetDateTime(reader.GetOrdinal("DiscountStartDate"));
+                DateTime? discEnd = reader.IsDBNull(reader.GetOrdinal("DiscountEndDate")) ? null : (DateTime?)reader.GetDateTime(reader.GetOrdinal("DiscountEndDate"));
+
+                bool isOnDiscount = discountRate > 0 && 
+                                   (discStart == null || discStart <= now) && 
+                                   (discEnd == null || discEnd >= now);
+
+                decimal finalPrice = isOnDiscount ? basePrice * (100 - discountRate) / 100 : basePrice;
+
                 items.Add((
                     reader.GetInt32("GameId"),
                     reader.GetString("Title"),
-                    reader.GetDecimal("Price")));
+                    finalPrice));
             }
 
             return items;

@@ -61,6 +61,16 @@ namespace VOID_STORE.Models
 
         public string InstallPath { get; set; } = string.Empty;
 
+        // Cikis ve Indirim Bilgileri
+        public DateTime? ReleaseDate { get; set; }
+        public bool IsReleased { get; set; }
+        public bool IsOnDiscount { get; set; }
+        public int DiscountRate { get; set; }
+        public decimal OriginalPrice { get; set; }
+        public string OriginalPriceText { get; set; } = string.Empty;
+        public DateTime? DiscountEndDate { get; set; }
+        public string DiscountTimeRemainingText { get; set; } = string.Empty;
+
         public List<string> Platforms { get; set; } = new();
 
         public List<string> Features { get; set; } = new();

@@ -52,10 +52,16 @@ namespace VOID_STORE.Controllers
             EnsureSchema();
 
             decimal price = ParsePrice(request.PriceText);
-            DateTime releaseDate = DateTime.ParseExact(
-                request.ReleaseDateText.Trim(),
-                "dd.MM.yyyy",
-                CultureInfo.InvariantCulture);
+            // Hem saat-dakikali hem sadece tarihli formati kabul et
+            DateTime releaseDate;
+            if (!DateTime.TryParseExact(request.ReleaseDateText.Trim(),
+                new[] { "dd.MM.yyyy HH:mm", "dd.MM.yyyy" },
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out releaseDate))
+            {
+                throw new InvalidOperationException("\u00c7ıkış tarihi geçersiz format: " + request.ReleaseDateText);
+            }
 
             int createdGameId = 0;
 
@@ -503,10 +509,16 @@ namespace VOID_STORE.Controllers
             }
 
             decimal price = ParsePrice(request.PriceText);
-            DateTime releaseDate = DateTime.ParseExact(
-                request.ReleaseDateText.Trim(),
-                "dd.MM.yyyy",
-                CultureInfo.InvariantCulture);
+            // Hem saat-dakikali hem sadece tarihli formati kabul et
+            DateTime releaseDate;
+            if (!DateTime.TryParseExact(request.ReleaseDateText.Trim(),
+                new[] { "dd.MM.yyyy HH:mm", "dd.MM.yyyy" },
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out releaseDate))
+            {
+                throw new InvalidOperationException("\u00c7ıkış tarihi geçersiz format: " + request.ReleaseDateText);
+            }
 
             (string coverRelativePath, string trailerRelativePath) = GameAssetManager.SaveDraftAssets(
                 request.GameId,
@@ -1001,14 +1013,30 @@ namespace VOID_STORE.Controllers
                 return "En az bir platform seçmelisiniz.";
             }
 
-            if (!DateTime.TryParseExact(
-                releaseDateText.Trim(),
-                "dd.MM.yyyy",
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.None,
-                out _))
+            // cikis tarihini hem saat-dakika hem de sadece tarih olarak kabul et
+            if (!string.IsNullOrWhiteSpace(releaseDateText))
             {
-                return "Çıkış tarihini GG.AA.YYYY biçiminde girin.";
+                bool validDate = DateTime.TryParseExact(
+                    releaseDateText.Trim(),
+                    "dd.MM.yyyy HH:mm",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out _);
+
+                if (!validDate)
+                {
+                    validDate = DateTime.TryParseExact(
+                        releaseDateText.Trim(),
+                        "dd.MM.yyyy",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out _);
+                }
+
+                if (!validDate)
+                {
+                    return "\u00c7ıkış tarihini GG.AA.YYYY biçiminde girin.";
+                }
             }
 
             string absoluteCoverPath = GameAssetManager.GetAbsoluteAssetPath(coverImageSourcePath);
@@ -1376,7 +1404,23 @@ namespace VOID_STORE.Controllers
                 CoverImageSourcePath = GameAssetManager.GetAbsoluteAssetPath(coverPath),
                 Platforms = platforms.ToList(),
                 GalleryImageSourcePaths = galleryPaths.ToList(),
-                HasPendingDraft = hasPendingDraft
+                HasPendingDraft = hasPendingDraft,
+                // Indirim alanlari sadece draft satirlarinda gelir, yoksa varsayilan kullan
+                IsFree = row.Table.Columns.Contains("IsFree") && row["IsFree"] != DBNull.Value
+                    ? Convert.ToBoolean(Convert.ToInt32(row["IsFree"]))
+                    : false,
+                DiscountRate = row.Table.Columns.Contains("DiscountRate") && row["DiscountRate"] != DBNull.Value
+                    ? Convert.ToInt32(row["DiscountRate"])
+                    : 0,
+                ReleaseDate = row["ReleaseDate"] == DBNull.Value
+                    ? (DateTime?)null
+                    : Convert.ToDateTime(row["ReleaseDate"], CultureInfo.InvariantCulture),
+                DiscountStartDate = row.Table.Columns.Contains("DiscountStartDate") && row["DiscountStartDate"] != DBNull.Value
+                    ? (DateTime?)Convert.ToDateTime(row["DiscountStartDate"], CultureInfo.InvariantCulture)
+                    : null,
+                DiscountEndDate = row.Table.Columns.Contains("DiscountEndDate") && row["DiscountEndDate"] != DBNull.Value
+                    ? (DateTime?)Convert.ToDateTime(row["DiscountEndDate"], CultureInfo.InvariantCulture)
+                    : null
             };
         }
 

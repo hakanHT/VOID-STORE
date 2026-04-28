@@ -263,6 +263,28 @@ namespace VOID_STORE.Views
             e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");
         }
 
+        // saat degeri 0-23 arasinda olmasini zorlayan metot
+        private void HourTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb)
+            {
+                if (!int.TryParse(tb.Text, out int val)) val = 0;
+                val = Math.Max(0, Math.Min(23, val));
+                tb.Text = val.ToString("D2");
+            }
+        }
+
+        // dakika degeri 0-59 arasinda olmasini zorlayan metot
+        private void MinuteTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb)
+            {
+                if (!int.TryParse(tb.Text, out int val)) val = 0;
+                val = Math.Max(0, Math.Min(59, val));
+                tb.Text = val.ToString("D2");
+            }
+        }
+
         private void UpdateNavigationState()
         {
             if (TabItemGenel == null || TabItemMedya == null || TabItemSistem == null) return;
@@ -451,7 +473,27 @@ namespace VOID_STORE.Views
 
         private GameCreateRequest BuildRequest()
         {
-        // form verisini tek istekte topla
+            // Sadece tarih, saat yok
+            string releaseDateStr = dpReleaseDate.SelectedDate?.ToString("dd.MM.yyyy") ?? "";
+
+            DateTime? discStart = null;
+            if (dpDiscountStart.SelectedDate.HasValue)
+            {
+                var d = dpDiscountStart.SelectedDate.Value;
+                int h = int.TryParse(txtDiscountStartHour.Text, out int parsedH) ? parsedH : 0;
+                int m = int.TryParse(txtDiscountStartMinute.Text, out int parsedM) ? parsedM : 0;
+                discStart = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+            }
+
+            DateTime? discEnd = null;
+            if (dpDiscountEnd.SelectedDate.HasValue)
+            {
+                var d = dpDiscountEnd.SelectedDate.Value;
+                int h = int.TryParse(txtDiscountEndHour.Text, out int parsedH) ? parsedH : 0;
+                int m = int.TryParse(txtDiscountEndMinute.Text, out int parsedM) ? parsedM : 0;
+                discEnd = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+            }
+
             return new GameCreateRequest
             {
                 Title = txtTitle.Text.Trim(),
@@ -460,7 +502,7 @@ namespace VOID_STORE.Views
                 Description = txtDescription.Text.Trim(),
                 Developer = txtDeveloper.Text.Trim(),
                 Publisher = txtPublisher.Text.Trim(),
-                ReleaseDateText = dpReleaseDate.SelectedDate?.ToString("dd.MM.yyyy") ?? "",
+                ReleaseDateText = releaseDateStr,
                 TrailerVideoSourcePath = _selectedTrailerPath,
                 MinimumRequirements = txtMinimumRequirements.Text.Trim(),
                 RecommendedRequirements = txtRecommendedRequirements.Text.Trim(),
@@ -472,8 +514,8 @@ namespace VOID_STORE.Views
                 
                 IsFree = txtPrice.Text == "0",
                 DiscountRate = int.TryParse(txtDiscountRate.Text, out int rate) ? rate : 0,
-                DiscountStartDate = dpDiscountStart.SelectedDate,
-                DiscountEndDate = dpDiscountEnd.SelectedDate
+                DiscountStartDate = discStart,
+                DiscountEndDate = discEnd
             };
         }
 
@@ -546,6 +588,15 @@ namespace VOID_STORE.Views
             txtDiscountRate.Text = "0";
             dpDiscountStart.SelectedDate = null;
             dpDiscountEnd.SelectedDate = null;
+
+            // Sadece indirim saatlerini sifirla
+            if (txtDiscountStartHour != null)
+            {
+                txtDiscountStartHour.Text = "00";
+                txtDiscountStartMinute.Text = "00";
+                txtDiscountEndHour.Text = "00";
+                txtDiscountEndMinute.Text = "00";
+            }
             
             txtSupportedLanguages.Clear();
             txtMinimumRequirements.Clear();
@@ -588,6 +639,54 @@ namespace VOID_STORE.Views
                 AdminTabControl.SelectedIndex = 2;
                 ShowTab3Errors();
                 CustomError.ShowDialog("Sistem & Platform kısmında eksik alanlar var (Özellikler, Diller ve Gereksinimler zorunludur).", "DOĞRULAMA HATASI");
+                return false;
+            }
+
+            // Indirim tarihi validasyonu
+            try
+            {
+                int discountRate = int.TryParse(txtDiscountRate.Text, out int dr) ? dr : 0;
+                if (discountRate > 0)
+                {
+                    // Cikis tarihini sadece tarih olarak al (saat yok)
+                    DateTime? releaseDateTime = dpReleaseDate.SelectedDate.HasValue
+                        ? dpReleaseDate.SelectedDate.Value.Date
+                        : (DateTime?)null;
+
+                    DateTime? discStart = null;
+                    if (dpDiscountStart.SelectedDate.HasValue)
+                    {
+                        int h = int.TryParse(txtDiscountStartHour.Text, out int dsh) ? dsh : 0;
+                        int m = int.TryParse(txtDiscountStartMinute.Text, out int dsm) ? dsm : 0;
+                        var d = dpDiscountStart.SelectedDate.Value;
+                        discStart = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+                    }
+
+                    DateTime? discEnd = null;
+                    if (dpDiscountEnd.SelectedDate.HasValue)
+                    {
+                        int h = int.TryParse(txtDiscountEndHour.Text, out int deh) ? deh : 0;
+                        int m = int.TryParse(txtDiscountEndMinute.Text, out int dem) ? dem : 0;
+                        var d = dpDiscountEnd.SelectedDate.Value;
+                        discEnd = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+                    }
+
+                    if (releaseDateTime.HasValue && discStart.HasValue && discStart.Value < releaseDateTime.Value)
+                    {
+                        CustomError.ShowDialog("İndirim başlangıç tarihi, oyunun çıkış tarihinden önce olamaz.", "DOĞRULAMA HATASI");
+                        return false;
+                    }
+
+                    if (discStart.HasValue && discEnd.HasValue && discEnd.Value <= discStart.Value)
+                    {
+                        CustomError.ShowDialog("İndirim bitiş tarihi ve saati, başlangıçtan sonra olmalıdır.", "DOĞRULAMA HATASI");
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomError.ShowDialog("Tarih doğrulama sırasında hata: " + ex.Message, "HATA");
                 return false;
             }
 

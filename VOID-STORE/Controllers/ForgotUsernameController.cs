@@ -25,7 +25,7 @@ namespace VOID_STORE.Controllers
 
             if (result != null)
             {
-                string username = result.ToString();
+                string username = result.ToString() ?? string.Empty;
                 
                 // kullanici bulundugunda hatirlatma maili yolla
                 bool isEmailSent = EmailManager.SendUsernameReminderEmail(email, username);

@@ -21,6 +21,29 @@
         <Style x:Key="TopNavButton" TargetType="Button"><Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#E7EAF0"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontSize" Value="15"/><Setter Property="FontWeight" Value="Medium"/><Setter Property="Cursor" Value="Hand"/><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,24,0"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border></ControlTemplate></Setter.Value></Setter><Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></Trigger></Style.Triggers></Style>
         <Style x:Key="CategoryMenuFlatButton" TargetType="Button" BasedOn="{StaticResource TopNavButton}"><Setter Property="Margin" Value="0,0,24,0"/><Setter Property="Padding" Value="0"/></Style>
         <Style x:Key="TopActionIconButton" TargetType="Button"><Setter Property="Width" Value="28"/><Setter Property="Height" Value="28"/><Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#D8DCE3"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border></ControlTemplate></Setter.Value></Setter><Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></Trigger></Style.Triggers></Style>
+        <Style x:Key="RemoveFromCartButton" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#6F7A88"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#FF4B4B"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="HeaderBalanceButton" TargetType="Button">
             <Setter Property="Height" Value="32"/>
             <Setter Property="Padding" Value="0"/>
@@ -429,8 +452,8 @@
                         <!-- Alt Kısım Butonları -->
                         <Button x:Name="btnSettingsNav" Grid.Row="1" Style="{StaticResource SidebarButton}" VerticalAlignment="Bottom" Margin="0,0,0,10" MouseEnter="SidebarButton_MouseEnter" MouseLeave="SidebarButton_MouseLeave">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#E2E8F0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Ayarlar" FontSize="17" FontWeight="Medium" Foreground="#E2E8F0" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center"/>
+                                <TextBlock Text="Ayarlar" FontSize="17" FontWeight="Medium" Margin="12,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -589,13 +612,7 @@
                                                                     </StackPanel>
                                                                     <Button Grid.Column="3"
                                                                             Tag="{Binding GameId}"
-                                                                            Width="34"
-                                                                            Height="34"
-                                                                            Background="Transparent"
-                                                                            Foreground="#AAB2BD"
-                                                                            BorderThickness="0"
-                                                                            Cursor="Hand"
-                                                                            FocusVisualStyle="{x:Null}"
+                                                                            Style="{StaticResource RemoveFromCartButton}"
                                                                             VerticalAlignment="Top"
                                                                             Click="RemoveCartItemButton_Click">
                                                                         <TextBlock Text="&#xE894;"
@@ -1034,6 +1051,15 @@
                                                                                 <ScaleTransform ScaleX="1" ScaleY="1"/>
                                                                             </Image.RenderTransform>
                                                                         </Image>
+                                                                        <Border x:Name="brdStoreCardDiscountBadge" Background="#00C35A" CornerRadius="0" Padding="8,4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Visibility="Collapsed">
+                                                                            <StackPanel Orientation="Horizontal">
+                                                                                <TextBlock Text="-%" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                                                                                <TextBlock Text="{Binding DiscountRate}" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <Border x:Name="brdStoreCardComingSoonBadge" Background="#1A5FB4" CornerRadius="0" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Visibility="Collapsed">
+                                                                            <TextBlock Text="YAKINDA" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                                                        </Border>
                                                                         <Border x:Name="CardHoverOverlay" Background="#18FFFFFF" Opacity="0"/>
                                                                         <Border x:Name="CardHoverFrame" BorderBrush="#FFFFFF" BorderThickness="1" CornerRadius="0" Opacity="0"/>
                                                                     </Grid>
@@ -1043,7 +1069,7 @@
                                                         <TextBlock Text="{Binding Category}" Foreground="#8F98A5" FontSize="12" Margin="0,14,0,0"/>
                                                         <TextBlock Text="{Binding Title}" Foreground="White" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
                                                         <TextBlock x:Name="txtStoreCardStatus" Text="{Binding StatusText}" Foreground="#82E4B0" FontSize="11" FontWeight="SemiBold" Margin="0,10,0,0" TextWrapping="Wrap"/>
-                                                        <TextBlock Text="{Binding PriceText}" Foreground="White" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"/>
+                                                        <TextBlock x:Name="txtStoreCardPrice" Text="{Binding PriceText}" Foreground="White" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0"/>
                                                     </StackPanel>
                                                 </Button>
                                                 <DataTemplate.Triggers>
@@ -1052,6 +1078,14 @@
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsInCart}" Value="True">
                                                         <Setter TargetName="txtStoreCardStatus" Property="Foreground" Value="#F5D174"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsOnDiscount}" Value="True">
+                                                        <Setter TargetName="brdStoreCardDiscountBadge" Property="Visibility" Value="Visible"/>
+                                                        <Setter TargetName="txtStoreCardPrice" Property="Foreground" Value="#82E4B0"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsReleased}" Value="False">
+                                                        <Setter TargetName="brdStoreCardComingSoonBadge" Property="Visibility" Value="Visible"/>
+                                                        <Setter TargetName="txtStoreCardPrice" Property="Foreground" Value="#63A7FF"/>
                                                     </DataTrigger>
                                                 </DataTemplate.Triggers>
                                             </DataTemplate>
@@ -2274,17 +2308,36 @@
                                                    FontWeight="SemiBold"
                                                    Margin="0,14,0,0"
                                                    Visibility="Collapsed"/>
-                                        <TextBlock x:Name="txtDetailPrice"
-                                                   Foreground="White"
-                                                   FontSize="32"
-                                                   FontWeight="Bold"
-                                                   Margin="0,18,0,0"/>
+                                        <StackPanel x:Name="pnlDetailPriceArea" Margin="0,18,0,0">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock x:Name="txtDetailPrice" Foreground="White" FontSize="32" FontWeight="Bold"/>
+                                                <TextBlock x:Name="txtDetailOriginalPrice" Foreground="#6F7783" FontSize="18" FontWeight="SemiBold" TextDecorations="Strikethrough" Margin="14,0,0,4" VerticalAlignment="Bottom" Visibility="Collapsed"/>
+                                            </StackPanel>
+                                            
+                                            <!-- İndirim Sayacı -->
+                                            <Border x:Name="brdDetailDiscountTimer" Background="#1A1D24" BorderBrush="#2A313C" BorderThickness="1" CornerRadius="0" Padding="12,8" Margin="0,12,0,0" Visibility="Collapsed">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xE916;" FontFamily="Segoe MDL2 Assets" Foreground="#FFCC00" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="txtDetailDiscountTimer" Foreground="#E2E8F0" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+
                                         <Button x:Name="btnDetailAddToCart"
                                                 Content="Sepete Ekle"
                                                 Style="{StaticResource PrimaryActionButton}"
                                                 Height="54"
                                                 Margin="0,20,0,0"
                                                 Click="AddToCartButton_Click"/>
+
+                                        <!-- Çok Yakında Durumu -->
+                                        <Border x:Name="brdDetailComingSoon" Background="#12161C" BorderBrush="#2A313C" BorderThickness="1" CornerRadius="0" Padding="20" Margin="0,20,0,0" Visibility="Collapsed">
+                                            <StackPanel>
+                                                <TextBlock Text="ÇOK YAKINDA" Foreground="#63A7FF" FontSize="13" FontWeight="Bold"/>
+                                                <TextBlock x:Name="txtDetailComingSoonDate" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,0"/>
+                                                <TextBlock Text="Bu oyun henüz yayınlanmadı. Çıkış tarihinde satın alabilirsin." Foreground="#8F98A5" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
                                         <Button x:Name="btnDetailWishlist"
                                                 Content="İstek Listesine Ekle"
                                                 Style="{StaticResource GhostActionButton}"

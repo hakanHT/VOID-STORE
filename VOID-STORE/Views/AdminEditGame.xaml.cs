@@ -472,14 +472,60 @@ namespace VOID_STORE.Views
             txtDescription.Text = state.Description;
             txtDeveloper.Text = state.Developer;
             txtPublisher.Text = state.Publisher;
-            dpReleaseDate.SelectedDate = DateTime.TryParseExact(state.ReleaseDateText, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var rd) ? rd : null;
+            // Tarih: sadece gun/ay/yil, saat kaldirildi
+            try
+            {
+                if (state.ReleaseDate.HasValue)
+                {
+                    dpReleaseDate.SelectedDate = state.ReleaseDate.Value.Date;
+                }
+                else if (!string.IsNullOrWhiteSpace(state.ReleaseDateText))
+                {
+                    if (DateTime.TryParseExact(state.ReleaseDateText.Split(' ')[0].Trim(), "dd.MM.yyyy",
+                        CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt))
+                        dpReleaseDate.SelectedDate = dt.Date;
+                    else
+                        dpReleaseDate.SelectedDate = null;
+                }
+                else
+                {
+                    dpReleaseDate.SelectedDate = null;
+                }
+            }
+            catch
+            {
+                dpReleaseDate.SelectedDate = null;
+            }
+
             txtSupportedLanguages.Text = state.SupportedLanguages;
             
             // Yeni Alanlar
             txtFreeHint.Visibility = state.IsFree ? Visibility.Visible : Visibility.Collapsed;
             txtDiscountRate.Text = state.DiscountRate.ToString();
+            
             dpDiscountStart.SelectedDate = state.DiscountStartDate;
+            if (state.DiscountStartDate.HasValue)
+            {
+                txtDiscountStartHour.Text = state.DiscountStartDate.Value.Hour.ToString("D2");
+                txtDiscountStartMinute.Text = state.DiscountStartDate.Value.Minute.ToString("D2");
+            }
+            else
+            {
+                txtDiscountStartHour.Text = "00";
+                txtDiscountStartMinute.Text = "00";
+            }
+
             dpDiscountEnd.SelectedDate = state.DiscountEndDate;
+            if (state.DiscountEndDate.HasValue)
+            {
+                txtDiscountEndHour.Text = state.DiscountEndDate.Value.Hour.ToString("D2");
+                txtDiscountEndMinute.Text = state.DiscountEndDate.Value.Minute.ToString("D2");
+            }
+            else
+            {
+                txtDiscountEndHour.Text = "00";
+                txtDiscountEndMinute.Text = "00";
+            }
 
             // Sistem gereksinimleri
             txtMinimumRequirements.Text = state.MinimumRequirements;
@@ -562,6 +608,55 @@ namespace VOID_STORE.Views
                 isValid = false;
             }
 
+            // Indirim Tarihi Validasyonu
+            try
+            {
+                int discountRate = int.TryParse(txtDiscountRate.Text, out int dr) ? dr : 0;
+                if (discountRate > 0)
+                {
+                    // Cikis tarihini sadece tarih olarak al (saat yok)
+                    DateTime? releaseDateTime = dpReleaseDate.SelectedDate.HasValue
+                        ? dpReleaseDate.SelectedDate.Value.Date
+                        : (DateTime?)null;
+
+                    // Indirim baslangic ve bitis tarihleri
+                    DateTime? discStart = null;
+                    if (dpDiscountStart.SelectedDate.HasValue)
+                    {
+                        int h = int.TryParse(txtDiscountStartHour.Text, out int dsh) ? dsh : 0;
+                        int m = int.TryParse(txtDiscountStartMinute.Text, out int dsm) ? dsm : 0;
+                        var d = dpDiscountStart.SelectedDate.Value;
+                        discStart = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+                    }
+
+                    DateTime? discEnd = null;
+                    if (dpDiscountEnd.SelectedDate.HasValue)
+                    {
+                        int h = int.TryParse(txtDiscountEndHour.Text, out int deh) ? deh : 0;
+                        int m = int.TryParse(txtDiscountEndMinute.Text, out int dem) ? dem : 0;
+                        var d = dpDiscountEnd.SelectedDate.Value;
+                        discEnd = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+                    }
+
+                    if (releaseDateTime.HasValue && discStart.HasValue && discStart.Value < releaseDateTime.Value)
+                    {
+                        CustomError.ShowDialog("\u0130ndirim başlangıc tarihi, oyunun çıkış tarihinden önce olamaz.", "DOĞRULAMA HATASI");
+                        return false;
+                    }
+
+                    if (discStart.HasValue && discEnd.HasValue && discEnd.Value <= discStart.Value)
+                    {
+                        CustomError.ShowDialog("\u0130ndirim bitiş tarihi ve saati, başlangıçtan sonra olmalıdır.", "DOĞRULAMA HATASI");
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomError.ShowDialog("Tarih doğrulama sırasında hata: " + ex.Message, "HATA");
+                return false;
+            }
+
             if (!isValid)
             {
                 CustomError.ShowDialog("Lütfen zorunlu alanları doldurun.", "DOĞRULAMA HATASI");
@@ -619,6 +714,27 @@ namespace VOID_STORE.Views
 
         private GameDraftSaveRequest BuildRequest()
         {
+            // Sadece tarih, saat yok
+            string releaseDateStr = dpReleaseDate.SelectedDate?.ToString("dd.MM.yyyy") ?? "";
+
+            DateTime? discStart = null;
+            if (dpDiscountStart.SelectedDate.HasValue)
+            {
+                var d = dpDiscountStart.SelectedDate.Value;
+                int h = int.TryParse(txtDiscountStartHour.Text, out int parsedH) ? parsedH : 0;
+                int m = int.TryParse(txtDiscountStartMinute.Text, out int parsedM) ? parsedM : 0;
+                discStart = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+            }
+
+            DateTime? discEnd = null;
+            if (dpDiscountEnd.SelectedDate.HasValue)
+            {
+                var d = dpDiscountEnd.SelectedDate.Value;
+                int h = int.TryParse(txtDiscountEndHour.Text, out int parsedH) ? parsedH : 0;
+                int m = int.TryParse(txtDiscountEndMinute.Text, out int parsedM) ? parsedM : 0;
+                discEnd = new DateTime(d.Year, d.Month, d.Day, h, m, 0);
+            }
+
             return new GameDraftSaveRequest
             {
                 GameId = _selectedGameId,
@@ -628,7 +744,7 @@ namespace VOID_STORE.Views
                 Description = txtDescription.Text.Trim(),
                 Developer = txtDeveloper.Text.Trim(),
                 Publisher = txtPublisher.Text.Trim(),
-                ReleaseDateText = dpReleaseDate.SelectedDate?.ToString("dd.MM.yyyy") ?? "",
+                ReleaseDateText = releaseDateStr,
                 TrailerVideoSourcePath = _selectedTrailerPath,
                 MinimumRequirements = txtMinimumRequirements.Text.Trim(),
                 RecommendedRequirements = txtRecommendedRequirements.Text.Trim(),
@@ -640,8 +756,8 @@ namespace VOID_STORE.Views
                 
                 IsFree = txtPrice.Text == "0",
                 DiscountRate = int.TryParse(txtDiscountRate.Text, out int rate) ? rate : 0,
-                DiscountStartDate = dpDiscountStart.SelectedDate,
-                DiscountEndDate = dpDiscountEnd.SelectedDate
+                DiscountStartDate = discStart,
+                DiscountEndDate = discEnd
             };
         }
 

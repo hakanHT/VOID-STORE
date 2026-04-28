@@ -20,7 +20,7 @@ namespace VOID_STORE.Controllers
 
             if (result != null)
             {
-                string email = result.ToString();
+                string email = result.ToString() ?? string.Empty;
                 return MaskEmail(email);
             }
 

@@ -922,11 +922,38 @@ namespace VOID_STORE.Views
 
             txtDetailCategory.Text = detail.Category;
             txtDetailTitle.Text = detail.Title;
-            txtDetailPrice.Text = detail.PriceText;
             imgDetailCover.Source = detail.CoverPreview;
             txtDetailDeveloper.Text = DisplayOrFallback(detail.Developer);
             txtDetailPublisher.Text = DisplayOrFallback(detail.Publisher);
             txtDetailReleaseDate.Text = DisplayOrFallback(detail.ReleaseDateText);
+
+            // Fiyat ve Indirim Durumu
+            txtDetailPrice.Text = detail.PriceText;
+            if (detail.IsOnDiscount)
+            {
+                txtDetailOriginalPrice.Text = detail.OriginalPriceText;
+                txtDetailOriginalPrice.Visibility = Visibility.Visible;
+                brdDetailDiscountTimer.Visibility = Visibility.Visible;
+                txtDetailDiscountTimer.Text = $"İNDİRİM: {detail.DiscountTimeRemainingText}";
+            }
+            else
+            {
+                txtDetailOriginalPrice.Visibility = Visibility.Collapsed;
+                brdDetailDiscountTimer.Visibility = Visibility.Collapsed;
+            }
+
+            // Cikis Durumu (Sepet Butonu Kontrolu)
+            if (detail.IsReleased)
+            {
+                btnDetailAddToCart.Visibility = Visibility.Visible;
+                brdDetailComingSoon.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                btnDetailAddToCart.Visibility = Visibility.Collapsed;
+                brdDetailComingSoon.Visibility = Visibility.Visible;
+                txtDetailComingSoonDate.Text = detail.ReleaseDateText;
+            }
             txtDetailCategoryValue.Text = detail.Category;
             txtDetailDescription.Text = DisplayOrFallback(detail.Description);
             txtMinimumRequirements.Text = DisplayOrFallback(detail.MinimumRequirements);

@@ -60,6 +60,10 @@ namespace VOID_STORE.Controllers
                     Title,
                     Category,
                     Price,
+                    DiscountRate,
+                    DiscountStartDate,
+                    DiscountEndDate,
+                    ReleaseDate,
                     CoverImagePath,
                     COALESCE(NULLIF(Publisher, ''), Developer, '') AS Subtitle
                   FROM Games
@@ -75,6 +79,7 @@ namespace VOID_STORE.Controllers
                 new SqlParameter("@Offset", offset));
 
             List<StoreGameCardItem> items = new();
+            DateTime now = DateTime.Now;
 
             foreach (DataRow row in table.Rows)
             {
@@ -82,14 +87,30 @@ namespace VOID_STORE.Controllers
                     ? string.Empty
                     : row["CoverImagePath"]?.ToString() ?? string.Empty;
 
+                decimal basePrice = row["Price"] == DBNull.Value ? 0 : Convert.ToDecimal(row["Price"], CultureInfo.InvariantCulture);
+                int discountRate = row["DiscountRate"] == DBNull.Value ? 0 : Convert.ToInt32(row["DiscountRate"]);
+                DateTime? discStart = row["DiscountStartDate"] == DBNull.Value ? null : (DateTime?)row["DiscountStartDate"];
+                DateTime? discEnd = row["DiscountEndDate"] == DBNull.Value ? null : (DateTime?)row["DiscountEndDate"];
+                DateTime? releaseDate = row["ReleaseDate"] == DBNull.Value ? null : (DateTime?)row["ReleaseDate"];
+
+                bool isOnDiscount = discountRate > 0 && 
+                                   (discStart == null || discStart <= now) && 
+                                   (discEnd == null || discEnd >= now);
+                bool isReleased = releaseDate == null || releaseDate <= now;
+
+                decimal finalPrice = isOnDiscount ? basePrice * (100 - discountRate) / 100 : basePrice;
+
                 items.Add(new StoreGameCardItem
                 {
                     GameId = Convert.ToInt32(row["GameId"]),
                     Title = row["Title"]?.ToString() ?? string.Empty,
                     Category = GameCategoryCatalog.Normalize(row["Category"]?.ToString()),
                     Subtitle = row["Subtitle"]?.ToString() ?? string.Empty,
-                    PriceAmount = Convert.ToDecimal(row["Price"], CultureInfo.InvariantCulture),
-                    PriceText = FormatPrice(row["Price"]),
+                    PriceAmount = finalPrice,
+                    PriceText = isReleased ? FormatPrice(finalPrice) : "Çok Yakında",
+                    IsReleased = isReleased,
+                    IsOnDiscount = isOnDiscount,
+                    DiscountRate = discountRate,
                     CoverImagePath = coverPath,
                     CoverPreview = GameAssetManager.LoadBitmap(coverPath)
                 });
@@ -113,6 +134,9 @@ namespace VOID_STORE.Controllers
                     Category,
                     Description,
                     Price,
+                    DiscountRate,
+                    DiscountStartDate,
+                    DiscountEndDate,
                     CoverImagePath,
                     Developer,
                     Publisher,
@@ -142,14 +166,36 @@ namespace VOID_STORE.Controllers
             string storedTrailerPath = row["TrailerVideoPath"] == DBNull.Value ? string.Empty : row["TrailerVideoPath"]?.ToString() ?? string.Empty;
             string resolvedTrailerPath = ResolveTrailerVideoPath(gameId, storedTrailerPath);
 
+            decimal basePrice = row["Price"] == DBNull.Value ? 0 : Convert.ToDecimal(row["Price"], CultureInfo.InvariantCulture);
+            int discountRate = row["DiscountRate"] == DBNull.Value ? 0 : Convert.ToInt32(row["DiscountRate"]);
+            DateTime? discStart = row["DiscountStartDate"] == DBNull.Value ? null : (DateTime?)row["DiscountStartDate"];
+            DateTime? discEnd = row["DiscountEndDate"] == DBNull.Value ? null : (DateTime?)row["DiscountEndDate"];
+            DateTime now = DateTime.Now;
+
+            bool isOnDiscount = discountRate > 0 && 
+                               (discStart == null || discStart <= now) && 
+                               (discEnd == null || discEnd >= now);
+
+            decimal finalPrice = isOnDiscount ? basePrice * (100 - discountRate) / 100 : basePrice;
+
+            DateTime? releaseDate = row["ReleaseDate"] == DBNull.Value ? null : (DateTime?)row["ReleaseDate"];
+            bool isReleased = releaseDate == null || releaseDate <= now;
+
             StoreGameDetail detail = new StoreGameDetail
             {
                 GameId = gameId,
                 Title = row["Title"]?.ToString() ?? string.Empty,
                 Category = GameCategoryCatalog.Normalize(row["Category"]?.ToString()),
                 Description = row["Description"]?.ToString() ?? string.Empty,
-                PriceAmount = row["Price"] == DBNull.Value ? 0 : Convert.ToDecimal(row["Price"], CultureInfo.InvariantCulture),
-                PriceText = FormatPrice(row["Price"]),
+                PriceAmount = finalPrice,
+                PriceText = FormatPrice(finalPrice),
+                OriginalPrice = basePrice,
+                OriginalPriceText = FormatPrice(basePrice),
+                IsOnDiscount = isOnDiscount,
+                DiscountRate = discountRate,
+                DiscountEndDate = discEnd,
+                ReleaseDate = releaseDate,
+                IsReleased = isReleased,
                 CoverImagePath = coverPath,
                 CoverPreview = GameAssetManager.LoadBitmap(coverPath),
                 Developer = row["Developer"]?.ToString() ?? string.Empty,
@@ -162,6 +208,38 @@ namespace VOID_STORE.Controllers
                 Platforms = GetPlatforms(gameId),
                 Features = ParseFeatures(row["GameFeatures"] == DBNull.Value ? string.Empty : row["GameFeatures"]?.ToString())
             };
+
+            if (isOnDiscount && discEnd.HasValue)
+            {
+                TimeSpan diff = discEnd.Value - now;
+                if (diff.TotalSeconds <= 0)
+                {
+                    detail.DiscountTimeRemainingText = string.Empty;
+                }
+                else if (diff.TotalDays >= 1)
+                {
+                    int days = (int)diff.TotalDays;
+                    int hours = diff.Hours;
+                    if (hours > 0)
+                        detail.DiscountTimeRemainingText = $"{days} gün {hours} saat kaldı";
+                    else
+                        detail.DiscountTimeRemainingText = $"{days} gün kaldı";
+                }
+                else if (diff.TotalHours >= 1)
+                {
+                    int hours = (int)diff.TotalHours;
+                    int minutes = diff.Minutes;
+                    if (minutes > 0)
+                        detail.DiscountTimeRemainingText = $"{hours} saat {minutes} dk kaldı";
+                    else
+                        detail.DiscountTimeRemainingText = $"{hours} saat kaldı";
+                }
+                else
+                {
+                    int minutes = (int)diff.TotalMinutes;
+                    detail.DiscountTimeRemainingText = minutes > 0 ? $"{minutes} dakika kaldı" : "Son dakika!";
+                }
+            }
 
             detail.MediaItems = BuildMediaItems(gameId, coverPath, detail.TrailerVideoPath);
             return detail;

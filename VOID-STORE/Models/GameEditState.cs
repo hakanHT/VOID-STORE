@@ -48,6 +48,7 @@ namespace VOID_STORE.Models
         // Yeni Alanlar (Ucretsiz & Indirim)
         public bool IsFree { get; set; }
         public int DiscountRate { get; set; }
+        public System.DateTime? ReleaseDate { get; set; }
         public System.DateTime? DiscountStartDate { get; set; }
         public System.DateTime? DiscountEndDate { get; set; }
     }

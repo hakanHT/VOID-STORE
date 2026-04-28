@@ -25,5 +25,8 @@ namespace VOID_STORE.Models
         public bool IsInCart { get; set; }
 
         public string StatusText { get; set; } = string.Empty;
+        public bool IsReleased { get; set; }
+        public bool IsOnDiscount { get; set; }
+        public int DiscountRate { get; set; }
     }
 }
